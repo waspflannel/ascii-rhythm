@@ -1,0 +1,13 @@
+# Godot 4
+.godot/
+/android/
+export_credentials.cfg
+
+# Builds
+/build/
+
+# Local beatmaps (keep the folder and its README)
+beatmaps/*
+!beatmaps/.gitkeep
+!beatmaps/.gdignore
+!beatmaps/README.md
