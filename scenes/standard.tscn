@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/play.tscn" id="1_play"]
+
+[node name="Standard" instance=ExtResource("1_play")]
+mode_name = "Standard"
+beatmap_path = "res://beatmaps/653534 Panda Eyes - ILY/Panda Eyes - ILY (M a r v o l l o) [Fanteer's Final Level].osu"
+
+[node name="ModeLabel" parent="UI" index="0"]
+text = "Standard / AUTOPLAY"

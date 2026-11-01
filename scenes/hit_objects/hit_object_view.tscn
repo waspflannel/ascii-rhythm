@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/modes/hit_object_view.gd" id="1_view"]
+
+
+[node name="HitObjectView" type="Node2D"]
+modulate = Color(0.8, 0.8, 0.8, 1)
+texture_filter = 4
+script = ExtResource("1_view")
+
+[node name="Sprite" type="Sprite2D" parent="."]

@@ -1,0 +1,40 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/hit_objects/hit_circle_view.tscn" id="1_circle"]
+[ext_resource type="Script" path="res://scripts/modes/standard/slider_view.gd" id="2_view"]
+
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/sliders/sliderb0@2x.png" id="3_ball"]
+
+[ext_resource type="Script" path="res://scripts/modes/standard/slider_track.gd" id="4_track"]
+
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/hitcircles/reversearrow@2x.png" id="5_repeat"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/sliders/sliderfollowcircle@2x.png" id="6_follow"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/sliders/sliderscorepoint@2x.png" id="7_tick"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/hitcircles/hitcircleoverlay@2x.png" id="8_overlay"]
+
+[node name="SliderView" instance=ExtResource("1_circle")]
+script = ExtResource("2_view")
+
+[node name="Track" type="Node2D" parent="." index="0"]
+script = ExtResource("4_track")
+
+[node name="Ball" type="Sprite2D" parent="." index="5"]
+texture = ExtResource("3_ball")
+
+[node name="Tail" type="Sprite2D" parent="." index="1"]
+texture = ExtResource("3_ball")
+
+[node name="TailOverlay" type="Sprite2D" parent="." index="2"]
+texture = ExtResource("8_overlay")
+
+[node name="RepeatArrow" type="Sprite2D" parent="."]
+visible = false
+texture = ExtResource("5_repeat")
+
+[node name="Follow" type="Sprite2D" parent="."]
+visible = false
+texture = ExtResource("6_follow")
+
+[node name="Tick" type="Sprite2D" parent="."]
+visible = false
+texture = ExtResource("7_tick")

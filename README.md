@@ -1,6 +1,6 @@
 # ASCII Rhythm (working title)
 
-An aesthetic osu!mania-style desktop rhythm game with simple graphics, ASCII art and a real-time dither post-process shader. Built with Godot 4 (GDScript). See [docs/DESIGN.md](docs/DESIGN.md).
+An aesthetic osu!mania-style desktop rhythm game with simple graphics, ASCII art and skinned hit objects. Built with Godot 4 (GDScript). See [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Open and run
 
@@ -12,11 +12,32 @@ From a terminal: `godot --path .` runs the game, `godot -e --path .` opens the e
 
 ## Layout
 
-- `scenes/`: scenes (`main.tscn` hosts the dithered SubViewport, `main_menu.tscn` the placeholder menu)
+- `scenes/`: scenes (`main.tscn` hosts a full-resolution SubViewport, `main_menu.tscn` uses standard Godot labels and buttons)
 - `scripts/core/`: autoloads (`Settings`, `GameState`, `SongClock`) and the main scene script
-- `scripts/beatmap/`, `scripts/modes/mania/`, `scripts/modes/standard/`, `scripts/ui/`: per-feature scripts
-- `shaders/dither.gdshader`: Bayer ordered dither to the black / crimson / off-white palette
+- `scripts/beatmap/parsers/`: `.osu` parsing (`Beatmap` base, `ManiaBeatmap`, `StandardBeatmap`)
+- `scripts/beatmap/hit_objects/`: parsed note data (`HitObject` base, `ManiaNote`, `HitCircle`, `Slider`, `Spinner`)
+- `scripts/modes/`: gameplay views (`HitObjectView` base, `mania/ManiaNoteView`, `standard/HitCircleView`, `SliderView`, `SpinnerView`), scenes in `scenes/hit_objects/`
+- `scripts/ui/`: menu scripts
+- `shaders/dither.gdshader`: unused Bayer ordered RGB dithering shader, retained for future hittable-sprite use only; shared settings in `shaders/dither_material.tres` (`color_levels`, `matrix_size`, `pixel_scale`)
 - `assets/fonts/`: fonts
 - `beatmaps/`: drop `.osz` files or map folders here (gitignored)
 
 Settings are saved to `user://settings.cfg` (on Windows, `%APPDATA%\Godot\app_userdata\ASCII Rhythm\`).
+
+## Autoplay simulation
+
+Run the project and choose **Standard**. Standard currently selects ILY [Fanteer's Final Level]. With an empty `beatmap_path`, the demo scans unpacked `.osu` files in `beatmaps/` and prefers Normal. It plays the selected map's music, and automatically hits circles, follows sliders, and spins spinners. A two-second lead-in lets the first objects appear before the music starts. The HUD shows progress and judgements; **Back** stops playback and returns to mode selection.
+
+**Mania** uses the same flow for Mode 3 maps, including taps and holds. The current ILY folder contains only standard maps, so Mania displays a missing-map message. To pick a specific difficulty, set `beatmap_path` on the inherited mode scene in the Inspector. Runtime music loading supports MP3, Ogg Vorbis, and WAV.
+
+Autoplay is temporary: `scripts/core/autoplay.gd` drives the normal object judgement methods through a simulated cursor; it does not click the desktop. This demo does not implement manual gameplay input yet.
+
+The HUD captions, messages, and buttons are authored in `scenes/play.tscn` and the inherited mode scenes. Scripts update live values only. Standard hit objects use Neptune textures plus the combo colors and slider colors read from `assets/skins/neptune/skin.ini`; grayscale circle masks are tinted while overlays stay white.
+
+Hit objects prefer the supplied `@2x` sprites with linear mipmap filtering, including skin digit sprites for combo numbers. Slider tracks are generated from beatmap curves (there is no curved-track PNG in the skin), with round joins and skin-defined colors. Each slider is drawn together so overlapping tracks cannot erase one another's borders.
+
+## Renderer preview
+
+Open `scenes/renderer_preview.tscn` and run that scene (F6) for fixed, silent examples of a circle, a slider before its head is hit, and an active repeating slider. The examples share the gameplay views and Neptune skin assets. Normal gameplay adds fade-in, shrinking approach rings, brief hit fades, shaded tracks, endpoints, ticks, repeat arrows, and follow circles. Spinner progress uses a standard scene-authored ProgressBar.
+
+Track shading is a generated approximation; this is not a complete osu! skin engine. The supplied combo colors are preserved rather than forcing the blue tint from the reference screenshot.

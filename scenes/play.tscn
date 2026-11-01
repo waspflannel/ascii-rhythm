@@ -1,0 +1,156 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/play.gd" id="1_play"]
+
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/hitcircles/cursor@2x.png" id="2_cursor"]
+
+[node name="Play" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_play")
+
+[node name="Playfield" type="Node2D" parent="."]
+
+[node name="AutoCursor" type="Sprite2D" parent="Playfield"]
+visible = false
+z_index = 100
+texture = ExtResource("2_cursor")
+scale = Vector2(0.075, 0.075)
+texture_filter = 4
+
+[node name="Music" type="AudioStreamPlayer" parent="."]
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ModeLabel" type="Label" parent="UI"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 160.0
+offset_bottom = 32.0
+text = "Play / AUTOPLAY"
+
+[node name="BackButton" type="Button" parent="UI"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -72.0
+offset_top = -36.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "Back"
+
+[node name="Details" type="HBoxContainer" parent="UI"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 36.0
+offset_right = 800.0
+offset_bottom = 59.0
+theme_override_constants/separation = 8
+
+[node name="MapCaption" type="Label" parent="UI/Details"]
+layout_mode = 2
+text = "Map:"
+
+[node name="MapValue" type="Label" parent="UI/Details"]
+layout_mode = 2
+text = "?"
+
+[node name="TimeCaption" type="Label" parent="UI/Details"]
+layout_mode = 2
+text = "Time:"
+
+[node name="TimeValue" type="Label" parent="UI/Details"]
+layout_mode = 2
+text = "0.0"
+
+[node name="Stats" type="HBoxContainer" parent="UI"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 60.0
+offset_right = 800.0
+offset_bottom = 83.0
+theme_override_constants/separation = 8
+
+[node name="ObjectsCaption" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "Objects:"
+
+[node name="ObjectsValue" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "0/0"
+
+[node name="PerfectCaption" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "Perfect:"
+
+[node name="PerfectValue" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "0"
+
+[node name="GreatCaption" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "Great:"
+
+[node name="GreatValue" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "0"
+
+[node name="GoodCaption" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "Good:"
+
+[node name="GoodValue" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "0"
+
+[node name="MissCaption" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "Miss:"
+
+[node name="MissValue" type="Label" parent="UI/Stats"]
+layout_mode = 2
+text = "0"
+
+[node name="MissingMapLabel" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = 12.0
+offset_top = 90.0
+offset_right = 800.0
+offset_bottom = 113.0
+text = "No matching .osu map found in beatmaps/ for this mode."
+
+[node name="AudioErrorLabel" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = 12.0
+offset_top = 90.0
+offset_right = 800.0
+offset_bottom = 113.0
+text = "Could not load the beatmap audio."
+
+[node name="CompleteLabel" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = 12.0
+offset_top = 90.0
+offset_right = 800.0
+offset_bottom = 113.0
+text = "Simulation complete."

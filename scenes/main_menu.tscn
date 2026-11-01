@@ -1,14 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
-
-[sub_resource type="SystemFont" id="SystemFont_mono"]
-font_names = PackedStringArray("Consolas", "DejaVu Sans Mono", "Menlo", "Monospace")
-antialiasing = 0
-
-[sub_resource type="Theme" id="Theme_menu"]
-default_font = SubResource("SystemFont_mono")
-default_font_size = 12
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -17,7 +9,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = SubResource("Theme_menu")
 script = ExtResource("1_menu")
 
 [node name="Center" type="CenterContainer" parent="."]
@@ -38,14 +29,10 @@ theme_override_font_sizes/font_size = 24
 text = "ASCII RHYTHM"
 horizontal_alignment = 1
 
-[node name="PlayButton" type="Button" parent="Center/Items"]
+[node name="ManiaButton" type="Button" parent="Center/Items"]
 layout_mode = 2
-text = "Play"
+text = "Mania"
 
-[node name="SettingsButton" type="Button" parent="Center/Items"]
+[node name="StandardButton" type="Button" parent="Center/Items"]
 layout_mode = 2
-text = "Settings"
-
-[node name="QuitButton" type="Button" parent="Center/Items"]
-layout_mode = 2
-text = "Quit"
+text = "Standard"

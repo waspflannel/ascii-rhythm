@@ -1,0 +1,33 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/hit_objects/hit_object_view.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/modes/standard/hit_circle_view.gd" id="2_view"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/hitcircles/hitcircle@2x.png" id="3_circle"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/hitcircles/approachcircle.png" id="4_approach"]
+
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/hitcircles/hitcircleoverlay@2x.png" id="5_overlay"]
+
+[ext_resource type="Script" path="res://scripts/modes/standard/combo_number.gd" id="6_number"]
+
+[node name="HitCircleView" instance=ExtResource("1_base")]
+script = ExtResource("2_view")
+
+[node name="Sprite" parent="." index="0"]
+texture = ExtResource("3_circle")
+
+[node name="Approach" type="Sprite2D" parent="." index="1"]
+texture = ExtResource("4_approach")
+
+[node name="Overlay" type="Sprite2D" parent="." index="2"]
+texture = ExtResource("5_overlay")
+
+[node name="Number" type="Node2D" parent="." index="3"]
+script = ExtResource("6_number")
+
+[node name="Digit0" type="Sprite2D" parent="Number"]
+
+[node name="Digit1" type="Sprite2D" parent="Number"]
+visible = false
+
+[node name="Digit2" type="Sprite2D" parent="Number"]
+visible = false
