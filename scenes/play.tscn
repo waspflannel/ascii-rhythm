@@ -16,7 +16,7 @@ script = ExtResource("1_play")
 
 [node name="Playfield" type="Node2D" parent="."]
 
-[node name="AutoCursor" type="Sprite2D" parent="Playfield"]
+[node name="Cursor" type="Sprite2D" parent="Playfield"]
 visible = false
 z_index = 100
 texture = ExtResource("2_cursor")
@@ -42,7 +42,7 @@ offset_left = 12.0
 offset_top = 72.0
 offset_right = 260.0
 offset_bottom = 92.0
-text = "Play / AUTOPLAY"
+text = "Play"
 
 [node name="BackButton" type="Button" parent="UI"]
 layout_mode = 1
@@ -158,4 +158,4 @@ offset_left = 12.0
 offset_top = 90.0
 offset_right = 800.0
 offset_bottom = 113.0
-text = "Simulation complete."
+text = "Playback complete."

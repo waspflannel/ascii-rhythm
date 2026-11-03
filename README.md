@@ -24,13 +24,15 @@ From a terminal: `godot --path .` runs the game, `godot -e --path .` opens the e
 
 Settings are saved to `user://settings.cfg` (on Windows, `%APPDATA%\Godot\app_userdata\ASCII Rhythm\`).
 
-## Autoplay simulation
+## Player input
 
-Run the project and choose **Standard**. Standard currently selects ILY [Fanteer's Final Level]. With an empty `beatmap_path`, the demo scans unpacked `.osu` files in `beatmaps/` and prefers Normal. It plays the selected map's music, and automatically hits circles, follows sliders, and spins spinners. A two-second lead-in lets the first objects appear before the music starts. The HUD shows progress and judgements; **Back** stops playback and returns to mode selection.
+Run the project and choose **Standard**. Standard currently selects ILY [Fanteer's Final Level]. With an empty `beatmap_path`, the demo scans unpacked `.osu` files in `beatmaps/` and prefers Normal. It plays the selected map's music. A two-second lead-in lets the first objects appear before the music starts. The HUD shows progress and judgements; **Back** stops playback and returns to mode selection.
 
 **Mania** uses the same flow for Mode 3 maps, including taps and holds. The current ILY folder contains only standard maps, so Mania displays a missing-map message. To pick a specific difficulty, set `beatmap_path` on the inherited mode scene in the Inspector. Runtime music loading supports MP3, Ogg Vorbis, and WAV.
 
-Autoplay is temporary: `scripts/core/autoplay.gd` drives the normal object judgement methods through a simulated cursor; it does not click the desktop. This demo does not implement manual gameplay input yet.
+Standard uses cursor aim with Z/X or either mouse button. Hit slider heads, then hold any hit button and follow the ball through the tail; releasing all buttons or leaving the follow circle misses. Hold a hit button and rotate around the center for spinners. Mania uses D F J K for 4K and S D F Space J K L for 7K; hold notes judge both press and release. Unhit notes expire as Miss.
+
+Gameplay is driven only by player input. Input judgments use SongClock audio time; keyboard repeats are ignored and losing focus releases held inputs.
 
 The HUD captions, messages, and buttons are authored in `scenes/play.tscn` and the inherited mode scenes. Scripts update live values only. Standard hit objects use Neptune textures plus the combo colors and slider colors read from `assets/skins/neptune/skin.ini`; grayscale circle masks are tinted while overlays stay white.
 

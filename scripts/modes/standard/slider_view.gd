@@ -1,13 +1,10 @@
 class_name SliderView
 extends HitCircleView
 ## An osu! standard slider. The head is hit like a circle, then the ball has to
-## be followed with a hit key held. Ticks, repeats and the tail are checkpoints,
-## and the final judgement is the share of head plus checkpoints that got hit.
+## be followed with a hit key held through the tail. Breaking tracking misses.
 
 ## Follow area around the ball, relative to the circle radius.
 const FOLLOW_SCALE := 2.4
-## osu! checks the tail this much early so fast sliders stay fair.
-const TAIL_LENIENCY := 0.036
 
 var track_color := Color.BLACK
 var border_color := Color.WHITE
@@ -16,11 +13,7 @@ var tint_ball := true
 var _tick_times: Array[float] = []
 var _tick_sprites: Array[Sprite2D] = []
 var _head_done := false
-var _head_hit := false
-## Song times where the ball must be tracked, in order.
-var _checkpoints: Array[float] = []
-var _next_checkpoint := 0
-var _checkpoints_hit := 0
+var _head_judgement := Judgement.NONE
 
 @onready var track: Node2D = $Track
 @onready var tail: Sprite2D = $Tail
@@ -40,12 +33,8 @@ func setup(p_data: HitObject, p_map: Beatmap) -> void:
 		if slider.tick_interval > 0.0:
 			var tick := span_start + slider.tick_interval
 			while tick < span_start + span - 0.01:
-				_checkpoints.append(tick)
 				_tick_times.append(tick)
 				tick += slider.tick_interval
-		if s < slider.slides - 1:
-			_checkpoints.append(span_start + span) # Repeat arrow.
-	_checkpoints.append(maxf(slider.time, slider.end_time - TAIL_LENIENCY))
 
 
 func _ready() -> void:
@@ -88,7 +77,8 @@ func update_view(t: float) -> void:
 	if not _head_done:
 		_update_approach(t)
 		if is_missed(t):
-			_resolve_head(false)
+			_finish(Judgement.MISS)
+			return
 	var ball_position := slider.position_at(t)
 	ball.visible = t >= slider.time
 	ball.position = ball_position - position
@@ -108,43 +98,37 @@ func update_view(t: float) -> void:
 		repeat_arrow.position = destination - position
 		repeat_arrow.rotation = (inward - destination).angle()
 	var tracking := holding and t >= slider.time and cursor().distance_to(ball_position) <= radius * FOLLOW_SCALE
-	while _next_checkpoint < _checkpoints.size() and _checkpoints[_next_checkpoint] <= t:
-		if tracking:
-			_checkpoints_hit += 1
-		_next_checkpoint += 1
-	if _next_checkpoint == _checkpoints.size():
-		_finish(_final_judgement())
+	if _head_done and t >= slider.time:
+		if not tracking:
+			_finish(Judgement.MISS)
+		elif t >= slider.end_time:
+			_finish(_head_judgement)
 
 
 func press(t: float) -> bool:
-	if _head_done or not contains(cursor()):
+	if finished or _head_done or not contains(cursor()):
 		return false
 	var judgement := judge(t)
 	if judgement == Judgement.NONE:
 		return false
-	_resolve_head(judgement != Judgement.MISS)
+	if judgement == Judgement.MISS:
+		_finish(Judgement.MISS)
+	else:
+		_head_judgement = judgement
+		_resolve_head()
 	return true
 
 
-func _resolve_head(hit: bool) -> void:
+func _resolve_head() -> void:
 	_head_done = true
-	_head_hit = hit
 	approach.hide()
 	for part in [sprite, overlay, number]:
 		create_tween().tween_property(part, "modulate:a", 0.0, 0.12)
 
 
-## osu! stable rules: everything hit is Perfect, half or more Great, any Good.
-func _final_judgement() -> Judgement:
-	var total := _checkpoints.size() + 1
-	var hit := _checkpoints_hit + int(_head_hit)
-	if hit == total:
-		return Judgement.PERFECT
-	if hit * 2 >= total:
-		return Judgement.GREAT
-	if hit > 0:
-		return Judgement.GOOD
-	return Judgement.MISS
+func release(t: float) -> void:
+	if _head_done and not finished and t < data.end_time:
+		_finish(Judgement.MISS)
 
 
 func play_exit() -> void:
