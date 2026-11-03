@@ -1,0 +1,98 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/scorebar-bg@2x.png" id="2_bar_bg"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/scorebar-colour@2x.png" id="3_bar"]
+[ext_resource type="Script" path="res://scripts/ui/skin_number.gd" id="4_number"]
+
+[node name="Hud" type="Control"]
+texture_filter = 2
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_hud")
+
+[node name="HealthBackground" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_bar_bg")
+expand_mode = 1
+
+[node name="Health" type="TextureProgressBar" parent="."]
+layout_mode = 1
+anchor_left = 0.00366
+anchor_top = 0.02083
+anchor_right = 0.35798
+anchor_bottom = 0.0931
+mouse_filter = 2
+max_value = 1.0
+step = 0.0
+value = 1.0
+nine_patch_stretch = true
+texture_progress = ExtResource("3_bar")
+
+[node name="Score" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -16.0
+offset_top = 8.0
+offset_right = -16.0
+offset_bottom = 48.0
+grow_horizontal = 0
+mouse_filter = 2
+alignment = 2
+script = ExtResource("4_number")
+
+[node name="Accuracy" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -16.0
+offset_top = 56.0
+offset_right = -16.0
+offset_bottom = 78.0
+grow_horizontal = 0
+mouse_filter = 2
+alignment = 2
+script = ExtResource("4_number")
+glyph_height = 22.0
+
+[node name="Combo" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -64.0
+offset_right = 16.0
+offset_bottom = -16.0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("4_number")
+glyph_height = 48.0
+overlap = 3.0
+
+[node name="Progress" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -3.0
+grow_horizontal = 2
+grow_vertical = 0
+scale = Vector2(0, 1)
+mouse_filter = 2
+color = Color(0.278, 0.463, 1, 0.8)

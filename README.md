@@ -12,13 +12,13 @@ From a terminal: `godot --path .` runs the game, `godot -e --path .` opens the e
 
 ## Layout
 
-- `scenes/`: scenes (`main.tscn` hosts a full-resolution SubViewport, `main_menu.tscn` uses standard Godot labels and buttons)
+- `scenes/`: scenes (`main.tscn` hosts a full-resolution SubViewport behind the dither shader; `main_menu.tscn`, `song_select.tscn` and `hud.tscn` use Neptune menu and HUD art)
 - `scripts/core/`: autoloads (`Settings`, `GameState`, `SongClock`) and the main scene script
 - `scripts/beatmap/parsers/`: `.osu` parsing (`Beatmap` base, `ManiaBeatmap`, `StandardBeatmap`)
 - `scripts/beatmap/hit_objects/`: parsed note data (`HitObject` base, `ManiaNote`, `HitCircle`, `Slider`, `Spinner`)
 - `scripts/modes/`: gameplay views (`HitObjectView` base, `mania/ManiaNoteView`, `standard/HitCircleView`, `SliderView`, `SpinnerView`), scenes in `scenes/hit_objects/`
 - `scripts/ui/`: menu scripts
-- `shaders/dither.gdshader`: unused Bayer ordered RGB dithering shader, retained for future hittable-sprite use only; shared settings in `shaders/dither_material.tres` (`color_levels`, `matrix_size`, `pixel_scale`)
+- `shaders/dither.gdshader`: Bayer ordered RGB dithering applied to the whole screen through `shaders/dither_material.tres` (`color_levels`, `matrix_size`, `pixel_scale`; the last two come from Settings)
 - `assets/fonts/`: fonts
 - `beatmaps/`: drop `.osz` files or map folders here (gitignored)
 
@@ -43,3 +43,9 @@ Hit objects prefer the supplied `@2x` sprites with linear mipmap filtering, incl
 Open `scenes/renderer_preview.tscn` and run that scene (F6) for fixed, silent examples of a circle, a slider before its head is hit, and an active repeating slider. The examples share the gameplay views and Neptune skin assets. Normal gameplay adds fade-in, shrinking approach rings, brief hit fades, shaded tracks, endpoints, ticks, repeat arrows, and follow circles. Spinner progress uses a standard scene-authored ProgressBar.
 
 Track shading is a generated approximation; this is not a complete osu! skin engine. The supplied combo colors are preserved rather than forcing the blue tint from the reference screenshot.
+
+## Screens
+
+**Mode select** (Mania or Standard) opens **song select**: a horizontal carousel of the unpacked `.osu` maps in `beatmaps/` for that mode (osu! `Mode: 3` for Mania, `Mode: 0` for Standard; others are skipped), grouped by folder with the easiest difficulty first. Left/Right, the mouse wheel or a click moves between cards; Enter or a click plays the focused map; Esc or **Back** returns to mode select. Song select remembers the last map played.
+
+**Gameplay** stays black with a small HUD (`scenes/hud.tscn`): Neptune HP bar, score, accuracy and combo in the skin's score digits, judgement popups and a thin song progress line. `scripts/core/run_score.gd` turns judgements into osu!-like score (ScoreV1 for Standard, 1,000,000-normalised for Mania), accuracy and HP. Misses drain HP and hits recover it, scaled by the map's HP drain. At zero HP the run fades out and returns to song select; it also returns two seconds after the song ends. A results screen is not built yet.
