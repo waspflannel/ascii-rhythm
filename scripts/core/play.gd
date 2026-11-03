@@ -1,9 +1,8 @@
 extends Control
-## Shared beatmap simulation: parse, play audio, spawn views, and drive temporary autoplay.
+## Shared beatmap simulation: parse, play audio, spawn views, and route player input.
 
 signal back_requested
 
-const AUTOPLAY := preload("res://scripts/core/autoplay.gd")
 const CIRCLE := preload("res://scenes/hit_objects/hit_circle_view.tscn")
 const SLIDER := preload("res://scenes/hit_objects/slider_view.tscn")
 const SPINNER := preload("res://scenes/hit_objects/spinner_view.tscn")
@@ -22,6 +21,8 @@ var _lead_in := 2.0
 var _running := false
 var _judgements := [0, 0, 0, 0, 0]
 var _completed := 0
+var _pressed: Dictionary = {}
+var _lane_keys: Array = []
 
 @onready var _field: Node2D = $Playfield
 @onready var _music: AudioStreamPlayer = $Music
@@ -29,12 +30,13 @@ var _completed := 0
 @onready var _time_value: Label = $UI/Details/TimeValue
 @onready var _objects_value: Label = $UI/Stats/ObjectsValue
 @onready var _judgement_values: Array[Label] = [$UI/Stats/PerfectValue, $UI/Stats/GreatValue, $UI/Stats/GoodValue, $UI/Stats/MissValue]
-@onready var _cursor: Sprite2D = $Playfield/AutoCursor
+@onready var _cursor: Sprite2D = $Playfield/Cursor
 
 
 func _ready() -> void:
     $UI/BackButton.pressed.connect(back_requested.emit)
-    $UI/BackButton.grab_focus()
+    $UI/BackButton.focus_mode = Control.FOCUS_NONE
+    $UI/ModeLabel.text = mode_name
     resized.connect(_layout_playfield)
     _music.finished.connect(_on_music_finished)
     var mode := Beatmap.MODE_MANIA if mode_name == "Mania" else Beatmap.MODE_STANDARD
@@ -67,6 +69,7 @@ func _ready() -> void:
         _preempt = 1.2 - 0.75 * (ar - 5.0) / 5.0 if ar >= 5.0 else 1.2 + 0.6 * (5.0 - ar) / 5.0
     else:
         _preempt = 600.0 / 800.0
+        _lane_keys = _keys_for_lanes(int(beatmap.circle_size))
         _add_lanes()
     _lead_in = maxf(2.0, beatmap.audio_lead_in)
     _layout_playfield()
@@ -91,14 +94,12 @@ func _advance(t: float) -> void:
     while _next_object < beatmap.hit_objects.size() and beatmap.hit_objects[_next_object].time - _preempt <= t:
         _spawn(beatmap.hit_objects[_next_object])
         _next_object += 1
-    _cursor.visible = false
+    _cursor.visible = beatmap.mode == Beatmap.MODE_STANDARD
+    _cursor.position = _field.get_local_mouse_position()
     for view in _live.duplicate():
-        AUTOPLAY.drive(view, t)
+        view.holding = _is_holding(view)
         if not view.finished:
             view.update_view(t)
-        if not _cursor.visible and view.simulated_cursor is Vector2 and t >= view.data.time:
-            _cursor.position = view.simulated_cursor
-            _cursor.visible = true
         if view.finished:
             _completed += 1
             _live.erase(view)
@@ -166,7 +167,19 @@ func _add_lanes() -> void:
 
 
 func _on_music_finished() -> void:
-    _advance(_music.stream.get_length())
+    _advance(SongClock.get_time())
+    # Audio has ended: objects beyond it cannot receive player input.
+    while _next_object < beatmap.hit_objects.size():
+        _spawn(beatmap.hit_objects[_next_object])
+        _next_object += 1
+    for view in _live:
+        view.miss()
+        _completed += 1
+        view.play_exit()
+    _live.clear()
+    _objects_value.text = "%d/%d" % [_completed, beatmap.hit_objects.size()]
+    for i in _judgement_values.size():
+        _judgement_values[i].text = str(_judgements[i + 1])
     _running = false
     $UI/CompleteLabel.show()
 
@@ -201,3 +214,76 @@ func _load_audio(path: String) -> AudioStream:
         "wav":
             return AudioStreamWAV.load_from_file(path)
     return null
+
+
+func _keys_for_lanes(count: int) -> Array:
+    match count:
+        4: return [KEY_D, KEY_F, KEY_J, KEY_K]
+        7: return [KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L]
+    # Other osu!mania key counts get one distinct physical key per lane.
+    return [KEY_A, KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON, KEY_APOSTROPHE, KEY_Q, KEY_W, KEY_E, KEY_R, KEY_U, KEY_I, KEY_O, KEY_P].slice(0, count)
+
+
+func _is_holding(view: HitObjectView) -> bool:
+    if view.data is ManiaNote:
+        return _pressed.has(_lane_keys[view.data.column])
+    return not _pressed.is_empty()
+
+
+func _input(event: InputEvent) -> void:
+    if not _running:
+        return
+    var code := 0
+    var down := false
+    if event is InputEventKey:
+        if event.echo:
+            return
+        code = event.physical_keycode
+        down = event.pressed
+        var keys: Array = _lane_keys if beatmap.mode == Beatmap.MODE_MANIA else [KEY_Z, KEY_X]
+        if not keys.has(code):
+            return
+    elif event is InputEventMouseButton and beatmap.mode == Beatmap.MODE_STANDARD:
+        if event.button_index not in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
+            return
+        if event.pressed and $UI/BackButton.get_global_rect().has_point(event.position):
+            return
+        code = -event.button_index
+        down = event.pressed
+    elif event is InputEventMouseMotion:
+        if _lead_in == 0.0:
+            _advance(SongClock.get_time())
+        return
+    else:
+        return
+    get_viewport().set_input_as_handled()
+    if down == _pressed.has(code):
+        return
+    var t := -_lead_in if _lead_in > 0.0 else SongClock.get_time()
+    # Advance with the old held state before applying this event's transition.
+    _advance(t)
+    if down:
+        _pressed[code] = true
+    else:
+        _pressed.erase(code)
+    for view in _live:
+        view.holding = _is_holding(view)
+        if view.finished:
+            continue
+        if view.data is ManiaNote and _lane_keys[view.data.column] != code:
+            continue
+        if down:
+            if view.press(t):
+                break
+        elif not view.holding:
+            view.release(t)
+    _advance(t)
+
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _running:
+        _pressed.clear()
+        var t := -_lead_in if _lead_in > 0.0 else SongClock.get_time()
+        for view in _live:
+            view.holding = false
+            view.release(t)

@@ -17,7 +17,7 @@ var data: HitObject
 var map: Beatmap
 ## Whether this object's hit key is down: the lane key in mania, any hit key in standard.
 var holding := false
-## Temporary autoplay aim in playfield coordinates; null uses the real mouse.
+## Optional simulated aim (renderer preview) in playfield coordinates; null uses the real mouse.
 var simulated_cursor: Variant = null
 ## True once the object has given its last judgement.
 var finished := false
@@ -78,6 +78,11 @@ func is_missed(t: float) -> bool:
 ## Cursor in the parent's space. In standard the parent is the playfield, so this is osu! pixels.
 func cursor() -> Vector2:
 	return simulated_cursor if simulated_cursor is Vector2 else get_parent().get_local_mouse_position()
+
+
+## Resolve an unfinished object when playback ends before it can be completed.
+func miss() -> void:
+	_finish(Judgement.MISS)
 
 
 ## Gives the last judgement and marks the view done.

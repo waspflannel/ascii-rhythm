@@ -31,7 +31,7 @@ func update_view(t: float) -> void:
 	modulate.a = clampf((t - data.time + 1.2) / 0.4, 0.0, 1.0)
 	var remaining := clampf((data.end_time - t) / maxf(data.end_time - data.time, 0.001), 0.0, 1.0)
 	sprite.scale = Vector2.ONE * RING_SIZE / sprite.texture.get_width() * maxf(remaining, 0.05)
-	if holding and t >= data.time:
+	if holding and t >= data.time and t <= data.end_time:
 		var angle := (cursor() - position).angle()
 		if not is_nan(_last_angle):
 			_spun += wrapf(angle - _last_angle, -PI, PI)
