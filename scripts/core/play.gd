@@ -9,6 +9,23 @@ const CIRCLE := preload("res://scenes/hit_objects/hit_circle_view.tscn")
 const SLIDER := preload("res://scenes/hit_objects/slider_view.tscn")
 const SPINNER := preload("res://scenes/hit_objects/spinner_view.tscn")
 const NOTE := preload("res://scenes/hit_objects/mania_note_view.tscn")
+## Default mania keys per key count, symmetric around the space bar.
+const MANIA_KEYS := {
+    1: [KEY_SPACE],
+    2: [KEY_F, KEY_J],
+    3: [KEY_F, KEY_SPACE, KEY_J],
+    4: [KEY_D, KEY_F, KEY_J, KEY_K],
+    5: [KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K],
+    6: [KEY_S, KEY_D, KEY_F, KEY_J, KEY_K, KEY_L],
+    7: [KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L],
+    8: [KEY_A, KEY_S, KEY_D, KEY_F, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON],
+    9: [KEY_A, KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON],
+    10: [KEY_A, KEY_S, KEY_D, KEY_F, KEY_V, KEY_N, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON],
+}
+## Larger key counts take the first keys from this list.
+const MANIA_EXTRA_KEYS := [KEY_A, KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON, KEY_APOSTROPHE, KEY_Q, KEY_W, KEY_E, KEY_R, KEY_U, KEY_I, KEY_O, KEY_P]
+## osu!lazer scroll speed: notes take this many seconds / speed to fall to the judgement line.
+const MANIA_SCROLL_TIME := 11.485
 
 @export var mode_name := "Play"
 ## Leave empty to pick a local matching map (Normal is preferred for the demo).
@@ -21,10 +38,14 @@ var _next_object := 0
 var _preempt := 1.2
 var _lead_in := 2.0
 var _running := false
-var _judgements := [0, 0, 0, 0, 0]
+var _judgements: Array[int] = []
 var _completed := 0
 var _pressed: Dictionary = {}
 var _lane_keys: Array = []
+## Mania only: the keys, judgement line and lane flashes.
+var _stage: ManiaStage
+## Mania only: how fast notes fall, in stage pixels per second.
+var _note_speed := 0.0
 var _hit_sound: AudioStreamPlayer
 
 @onready var _field: Node2D = $Playfield
@@ -40,6 +61,7 @@ func _ready() -> void:
     $UI/BackButton.pressed.connect(back_requested.emit)
     $UI/BackButton.focus_mode = Control.FOCUS_NONE
     $UI/ModeLabel.text = mode_name
+    _judgements.resize(HitObjectView.Judgement.size())
     resized.connect(_layout_playfield)
     _music.finished.connect(_on_music_finished)
     var mode := Beatmap.MODE_MANIA if mode_name == "Mania" else Beatmap.MODE_STANDARD
@@ -77,9 +99,12 @@ func _ready() -> void:
         var ar := beatmap.approach_rate
         _preempt = 1.2 - 0.75 * (ar - 5.0) / 5.0 if ar >= 5.0 else 1.2 + 0.6 * (5.0 - ar) / 5.0
     else:
-        _preempt = 600.0 / 800.0
-        _lane_keys = _keys_for_lanes(int(beatmap.circle_size))
-        _add_lanes()
+        var keys := (beatmap as ManiaBeatmap).key_count()
+        _lane_keys = MANIA_KEYS.get(keys, MANIA_EXTRA_KEYS.slice(0, keys))
+        _stage = ManiaStage.new()
+        _stage.setup(keys)
+        _field.add_child(_stage)
+        _set_scroll_speed(int(Settings.get_value("mania", "scroll_speed")))
     _lead_in = maxf(2.0, beatmap.audio_lead_in)
     _layout_playfield()
     _running = true
@@ -114,9 +139,7 @@ func _advance(t: float) -> void:
             _live.erase(view)
             view.play_exit()
     _time_value.text = "%.1f" % t
-    _objects_value.text = "%d/%d" % [_completed, beatmap.hit_objects.size()]
-    for i in _judgement_values.size():
-        _judgement_values[i].text = str(_judgements[i + 1])
+    _show_stats()
 
 
 func _spawn(object: HitObject) -> void:
@@ -135,46 +158,68 @@ func _spawn(object: HitObject) -> void:
         view.track_color = _skin.slider_track
         view.border_color = _skin.slider_border
         view.tint_ball = _skin.tint_slider_ball
-    view.judged.connect(_on_judged)
+    if view is ManiaNoteView:
+        view.scroll_speed = _note_speed
+    view.judged.connect(_on_judged.bind(view))
     _field.add_child(view)
     _live.append(view)
     if object is HitCircle or object is HitSlider or object is Spinner:
         # Earlier objects render above later ones, including each complete slider track.
         _field.move_child(view, 0)
     if object is ManiaNote:
-        view.position.x = (object.column + 0.5) * 64.0
+        view.position.x = (object.column + 0.5) * ManiaStage.COLUMN_WIDTH
 
 
-func _on_judged(judgement: HitObjectView.Judgement) -> void:
+func _on_judged(judgement: HitObjectView.Judgement, view: HitObjectView) -> void:
     _judgements[judgement] += 1
     if judgement != HitObjectView.Judgement.MISS:
         _hit_sound.play()
+        if view.data is ManiaNote:
+            _stage.flash(view.data.column)
 
 
 func _layout_playfield() -> void:
     if beatmap == null:
         return
+    if beatmap.mode == Beatmap.MODE_MANIA:
+        # The stage fills the screen height, as osu!mania's 480 px tall layout does.
+        var width := (beatmap as ManiaBeatmap).key_count() * ManiaStage.COLUMN_WIDTH
+        var stage_scale := minf(size.y / ManiaStage.SCREEN_HEIGHT, size.x / width)
+        _field.scale = Vector2.ONE * stage_scale
+        _field.position = Vector2((size.x - width * stage_scale) / 2.0, ManiaStage.HIT_POSITION * stage_scale)
+        return
     var available := Vector2(maxf(size.x - 32.0, 1.0), maxf(size.y - 136.0, 1.0))
-    var world := Vector2(512, 384) if beatmap.mode == Beatmap.MODE_STANDARD else Vector2(beatmap.circle_size * 64.0, 600)
+    var world := Vector2(512, 384)
     var fit := minf(available.x / world.x, available.y / world.y)
     _field.scale = Vector2.ONE * fit
     _field.position = Vector2((size.x - world.x * fit) / 2.0, 88.0)
-    if beatmap.mode == Beatmap.MODE_MANIA:
-        _field.position.y += 560.0 * fit
 
 
-func _add_lanes() -> void:
-    var width := beatmap.circle_size * 64.0
-    for i in int(beatmap.circle_size) + 1:
-        var line := Line2D.new()
-        line.points = PackedVector2Array([Vector2(i * 64, -560), Vector2(i * 64, 24)])
-        line.width = 2.0
-        line.default_color = Color(0.25, 0.25, 0.3)
-        _field.add_child(line)
-    var hit_line := Line2D.new()
-    hit_line.points = PackedVector2Array([Vector2.ZERO, Vector2(width, 0)])
-    hit_line.width = 3.0
-    _field.add_child(hit_line)
+## Sets the mania scroll speed (1 to 40) for new and falling notes.
+func _set_scroll_speed(speed: int) -> void:
+    speed = clampi(speed, 1, 40)
+    _preempt = MANIA_SCROLL_TIME / speed
+    _note_speed = ManiaStage.HIT_POSITION / _preempt
+    for view in _live:
+        if view is ManiaNoteView:
+            view.scroll_speed = _note_speed
+    $UI/ModeLabel.text = "%s %dK  speed %d (F3/F4)" % [mode_name, _lane_keys.size(), speed]
+
+
+## F3 slows the notes down and F4 speeds them up; the setting is saved straight away.
+func _change_scroll_speed(step: int) -> void:
+    var speed := clampi(int(Settings.get_value("mania", "scroll_speed")) + step, 1, 40)
+    Settings.set_value("mania", "scroll_speed", speed)
+    Settings.save_settings()
+    _set_scroll_speed(speed)
+
+
+## The hidden debug stats under UI.
+func _show_stats() -> void:
+    _objects_value.text = "%d/%d" % [_completed, beatmap.hit_objects.size()]
+    var shown := [HitObjectView.Judgement.PERFECT, HitObjectView.Judgement.GREAT, HitObjectView.Judgement.GOOD, HitObjectView.Judgement.MISS]
+    for i in _judgement_values.size():
+        _judgement_values[i].text = str(_judgements[shown[i]])
 
 
 func _on_music_finished() -> void:
@@ -188,9 +233,7 @@ func _on_music_finished() -> void:
         _completed += 1
         view.play_exit()
     _live.clear()
-    _objects_value.text = "%d/%d" % [_completed, beatmap.hit_objects.size()]
-    for i in _judgement_values.size():
-        _judgement_values[i].text = str(_judgements[i + 1])
+    _show_stats()
     _running = false
     $UI/CompleteLabel.show()
 
@@ -227,14 +270,6 @@ func _load_audio(path: String) -> AudioStream:
     return null
 
 
-func _keys_for_lanes(count: int) -> Array:
-    match count:
-        4: return [KEY_D, KEY_F, KEY_J, KEY_K]
-        7: return [KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L]
-    # Other osu!mania key counts get one distinct physical key per lane.
-    return [KEY_A, KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON, KEY_APOSTROPHE, KEY_Q, KEY_W, KEY_E, KEY_R, KEY_U, KEY_I, KEY_O, KEY_P].slice(0, count)
-
-
 func _is_holding(view: HitObjectView) -> bool:
     if view.data is ManiaNote:
         return _pressed.has(_lane_keys[view.data.column])
@@ -247,6 +282,10 @@ func _input(event: InputEvent) -> void:
     var code := 0
     var down := false
     if event is InputEventKey:
+        if beatmap.mode == Beatmap.MODE_MANIA and event.pressed and event.physical_keycode in [KEY_F3, KEY_F4]:
+            get_viewport().set_input_as_handled()
+            _change_scroll_speed(-1 if event.physical_keycode == KEY_F3 else 1)
+            return
         if event.echo:
             return
         code = event.physical_keycode
@@ -277,6 +316,8 @@ func _input(event: InputEvent) -> void:
         _pressed[code] = true
     else:
         _pressed.erase(code)
+    if _stage:
+        _stage.set_pressed(_lane_keys.find(code), down)
     for view in _live:
         view.holding = _is_holding(view)
         if view.finished:
@@ -297,6 +338,9 @@ func _input(event: InputEvent) -> void:
 func _notification(what: int) -> void:
     if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _running:
         _pressed.clear()
+        if _stage:
+            for column in _lane_keys.size():
+                _stage.set_pressed(column, false)
         var t := -_lead_in if _lead_in > 0.0 else SongClock.get_time()
         for view in _live:
             view.holding = false

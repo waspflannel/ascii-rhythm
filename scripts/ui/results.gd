@@ -19,8 +19,8 @@ const GRADES := {
 ## Set before adding to the tree.
 var score: RunScore
 
-## Hit count rows in HitObjectView.Judgement order, starting at PERFECT.
-@onready var _hit_rows: Array[Node] = [$Stats/Perfect, $Stats/Great, $Stats/Good, $Stats/Miss]
+## Hit count rows in HitObjectView.Judgement order, starting at MAX.
+@onready var _hit_rows: Array[Node] = [$Stats/Max, $Stats/Perfect, $Stats/Great, $Stats/Good, $Stats/Meh, $Stats/Miss]
 
 
 func _ready() -> void:
@@ -53,7 +53,8 @@ func _show_map(map: Beatmap) -> void:
 	$Map/Version.text = "[%s]  %s" % [map.version, mode]
 
 
-## One row per judgement: the skin's judgement image where Neptune has one, its hit value and the count.
+## One row per judgement the mode gives: the skin's judgement image where Neptune has one,
+## its hit value and the count.
 func _show_hit_counts() -> void:
 	var mania := score.map.mode == Beatmap.MODE_MANIA
 	var icons := HUD.MANIA_POPUPS if mania else HUD.STANDARD_POPUPS
@@ -61,8 +62,15 @@ func _show_hit_counts() -> void:
 	for i in _hit_rows.size():
 		var judgement := i + 1
 		var row := _hit_rows[i]
+		var miss := judgement == HitObjectView.Judgement.MISS
+		row.visible = miss or values[judgement] > 0
 		row.get_node("Icon").texture = icons[judgement]
-		row.get_node("Name").text = "Miss" if judgement == HitObjectView.Judgement.MISS else str(values[judgement])
+		var label := str(values[judgement])
+		if miss:
+			label = "Miss"
+		elif judgement == HitObjectView.Judgement.MAX:
+			label = "MAX"
+		row.get_node("Name").text = label
 		row.get_node("Count").set_text(str(score.counts[judgement]))
 
 
