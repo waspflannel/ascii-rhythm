@@ -22,6 +22,8 @@ const MANIA_POPUPS: Array[Texture2D] = [
 const MANIA_POPUP_Y := 220.0 / 480.0
 
 var _score: RunScore
+## Hit objects that have given their last judgement; the map is done when all have.
+var _finished_objects := 0
 var _leaving := false
 var _mania_popup: Sprite2D
 
@@ -66,13 +68,18 @@ func _on_field_child(node: Node) -> void:
 
 
 func _on_judged(judgement: HitObjectView.Judgement, view: HitObjectView) -> void:
-	if _score == null or _leaving:
+	# Judgements still count while leaving after the song, so objects it cut off show as misses.
+	if _score == null or _score.failed:
 		return
 	_score.add(judgement)
 	_refresh()
 	_show_popup(judgement, view)
+	if view.finished:
+		_finished_objects += 1
 	if _score.failed:
 		_leave(true)
+	elif _finished_objects == _play.beatmap.hit_objects.size():
+		_leave(false)
 
 
 func _refresh() -> void:
@@ -104,17 +111,15 @@ func _show_popup(judgement: HitObjectView.Judgement, view: HitObjectView) -> voi
 	tween.tween_callback(popup.queue_free)
 
 
-## Returns to song select: a quiet fade-out on fail, a short pause after the song ends.
+## Hands the run to the results screen: a quiet fade-out on fail, or a short music
+## fade once every object is judged or the song ends.
 func _leave(failed: bool) -> void:
 	if _leaving:
 		return
 	_leaving = true
-	var tween := create_tween()
+	var duration := 1.5 if failed else 2.0
+	var tween := create_tween().set_parallel()
 	if failed:
-		tween.set_parallel()
-		tween.tween_property(_play, "modulate:a", 0.0, 1.5)
-		tween.tween_property(_music, "volume_db", -40.0, 1.5)
-		tween.chain().tween_callback(_play.back_requested.emit)
-	else:
-		tween.tween_interval(2.0)
-		tween.tween_callback(_play.back_requested.emit)
+		tween.tween_property(_play, "modulate:a", 0.0, duration)
+	tween.tween_property(_music, "volume_db", -40.0, duration)
+	tween.chain().tween_callback(_play.run_finished.emit.bind(_score))
