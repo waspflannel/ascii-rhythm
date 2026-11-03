@@ -32,6 +32,8 @@ var hp_drain := 5.0
 var circle_size := 5.0
 var overall_difficulty := 5.0
 var approach_rate := -1.0
+## [General] SampleSet: Normal, Soft or Drum. Picks the skin hit sound.
+var sample_set := "Soft"
 var timing_points: Array[TimingPoint] = []
 ## Sorted by time, ready for the gameplay scene.
 var hit_objects: Array[HitObject] = []
@@ -148,6 +150,7 @@ func _set_field(key: String, value: String) -> void:
 		"CircleSize": circle_size = value.to_float()
 		"OverallDifficulty": overall_difficulty = value.to_float()
 		"ApproachRate": approach_rate = value.to_float()
+		"SampleSet": sample_set = value
 
 
 ## Turns one [HitObjects] line, already split on commas, into a HitObject.
