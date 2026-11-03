@@ -23,6 +23,7 @@ var _judgements := [0, 0, 0, 0, 0]
 var _completed := 0
 var _pressed: Dictionary = {}
 var _lane_keys: Array = []
+var _hit_sound: AudioStreamPlayer
 
 @onready var _field: Node2D = $Playfield
 @onready var _music: AudioStreamPlayer = $Music
@@ -64,6 +65,12 @@ func _ready() -> void:
         return
     _map_value.text = "%s [%s]" % [beatmap.title, beatmap.version]
     _music.volume_linear = clampf(float(Settings.get_value("audio", "volume")), 0.0, 1.0)
+    _hit_sound = AudioStreamPlayer.new()
+    _hit_sound.stream = _skin.hit_sound(beatmap.sample_set)
+    _hit_sound.volume_linear = _music.volume_linear * 0.5
+    # Built-in voice pool: rapid hits overlap instead of cutting each other off.
+    _hit_sound.max_polyphony = 8
+    add_child(_hit_sound)
     if beatmap.mode == Beatmap.MODE_STANDARD:
         var ar := beatmap.approach_rate
         _preempt = 1.2 - 0.75 * (ar - 5.0) / 5.0 if ar >= 5.0 else 1.2 + 0.6 * (5.0 - ar) / 5.0
@@ -138,6 +145,8 @@ func _spawn(object: HitObject) -> void:
 
 func _on_judged(judgement: HitObjectView.Judgement) -> void:
     _judgements[judgement] += 1
+    if judgement != HitObjectView.Judgement.MISS:
+        _hit_sound.play()
 
 
 func _layout_playfield() -> void:
@@ -274,6 +283,9 @@ func _input(event: InputEvent) -> void:
             continue
         if down:
             if view.press(t):
+                # A slider head hit gives no judgement until the slider ends, so sound it here.
+                if view is SliderView and not view.finished:
+                    _hit_sound.play()
                 break
         elif not view.holding:
             view.release(t)

@@ -6,10 +6,13 @@ var combo_colors: Array[Color] = []
 var slider_border := Color.WHITE
 var slider_track := Color.BLACK
 var tint_slider_ball := true
+## Folder holding skin.ini.
+var folder := ""
 
 
 static func from_file(path: String) -> RhythmSkin:
     var skin := RhythmSkin.new()
+    skin.folder = path.get_base_dir()
     var section := ""
     for raw in FileAccess.get_file_as_string(path).split("\n"):
         var line := raw.strip_edges()
@@ -36,3 +39,11 @@ static func from_file(path: String) -> RhythmSkin:
     if skin.combo_colors.is_empty():
         skin.combo_colors.append(Color.WHITE)
     return skin
+
+
+## The hitnormal sample for a beatmap SampleSet; falls back to soft if the skin lacks it.
+func hit_sound(sample_set: String) -> AudioStream:
+    var path := folder.path_join("sounds/%s-hitnormal.ogg" % sample_set.to_lower())
+    if not ResourceLoader.exists(path):
+        path = folder.path_join("sounds/soft-hitnormal.ogg")
+    return load(path)
