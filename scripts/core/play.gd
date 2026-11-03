@@ -1,9 +1,8 @@
 extends Control
-## Shared beatmap simulation: parse, play audio, spawn views, and route player input or autoplay.
+## Shared beatmap simulation: parse, play audio, spawn views, and route player input.
 
 signal back_requested
 
-const AUTOPLAY := preload("res://scripts/core/autoplay.gd")
 const CIRCLE := preload("res://scenes/hit_objects/hit_circle_view.tscn")
 const SLIDER := preload("res://scenes/hit_objects/slider_view.tscn")
 const SPINNER := preload("res://scenes/hit_objects/spinner_view.tscn")
@@ -22,7 +21,6 @@ var _lead_in := 2.0
 var _running := false
 var _judgements := [0, 0, 0, 0, 0]
 var _completed := 0
-var _autoplay := false
 var _pressed: Dictionary = {}
 var _lane_keys: Array = []
 
@@ -32,14 +30,13 @@ var _lane_keys: Array = []
 @onready var _time_value: Label = $UI/Details/TimeValue
 @onready var _objects_value: Label = $UI/Stats/ObjectsValue
 @onready var _judgement_values: Array[Label] = [$UI/Stats/PerfectValue, $UI/Stats/GreatValue, $UI/Stats/GoodValue, $UI/Stats/MissValue]
-@onready var _cursor: Sprite2D = $Playfield/AutoCursor
+@onready var _cursor: Sprite2D = $Playfield/Cursor
 
 
 func _ready() -> void:
     $UI/BackButton.pressed.connect(back_requested.emit)
     $UI/BackButton.focus_mode = Control.FOCUS_NONE
-    _autoplay = bool(Settings.get_value("gameplay", "autoplay"))
-    $UI/ModeLabel.text = mode_name + (" / AUTOPLAY" if _autoplay else " / PLAYER")
+    $UI/ModeLabel.text = mode_name
     resized.connect(_layout_playfield)
     _music.finished.connect(_on_music_finished)
     var mode := Beatmap.MODE_MANIA if mode_name == "Mania" else Beatmap.MODE_STANDARD
@@ -97,18 +94,12 @@ func _advance(t: float) -> void:
     while _next_object < beatmap.hit_objects.size() and beatmap.hit_objects[_next_object].time - _preempt <= t:
         _spawn(beatmap.hit_objects[_next_object])
         _next_object += 1
-    _cursor.visible = not _autoplay and beatmap.mode == Beatmap.MODE_STANDARD
+    _cursor.visible = beatmap.mode == Beatmap.MODE_STANDARD
     _cursor.position = _field.get_local_mouse_position()
     for view in _live.duplicate():
-        if _autoplay:
-            AUTOPLAY.drive(view, t)
-        else:
-            view.holding = _is_holding(view)
+        view.holding = _is_holding(view)
         if not view.finished:
             view.update_view(t)
-        if _autoplay and not _cursor.visible and view.simulated_cursor is Vector2 and t >= view.data.time:
-            _cursor.position = view.simulated_cursor
-            _cursor.visible = true
         if view.finished:
             _completed += 1
             _live.erase(view)
@@ -240,7 +231,7 @@ func _is_holding(view: HitObjectView) -> bool:
 
 
 func _input(event: InputEvent) -> void:
-    if not _running or _autoplay:
+    if not _running:
         return
     var code := 0
     var down := false
@@ -290,7 +281,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _notification(what: int) -> void:
-    if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _running and not _autoplay:
+    if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _running:
         _pressed.clear()
         var t := -_lead_in if _lead_in > 0.0 else SongClock.get_time()
         for view in _live:

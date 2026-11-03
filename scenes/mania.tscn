@@ -6,4 +6,4 @@
 mode_name = "Mania"
 
 [node name="ModeLabel" parent="UI" index="0"]
-text = "Mania / AUTOPLAY"
+text = "Mania"

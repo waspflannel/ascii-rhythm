@@ -36,11 +36,3 @@ text = "Mania"
 [node name="StandardButton" type="Button" parent="Center/Items"]
 layout_mode = 2
 text = "Standard"
-
-[node name="SettingsLabel" type="Label" parent="Center/Items"]
-layout_mode = 2
-text = "Settings"
-
-[node name="Autoplay" type="CheckButton" parent="Center/Items"]
-layout_mode = 2
-text = "Autoplay"

@@ -3,7 +3,6 @@ extends Node
 
 const PATH := "user://settings.cfg"
 const DEFAULTS := {
-	"gameplay": {"autoplay": false},
 	"audio": {"offset_ms": 0, "volume": 1.0},
 	"dither": {"pixel_scale": 3, "matrix_size": 4},
 }

@@ -17,7 +17,7 @@ var data: HitObject
 var map: Beatmap
 ## Whether this object's hit key is down: the lane key in mania, any hit key in standard.
 var holding := false
-## Optional autoplay aim in playfield coordinates; null uses the real mouse.
+## Optional simulated aim (renderer preview) in playfield coordinates; null uses the real mouse.
 var simulated_cursor: Variant = null
 ## True once the object has given its last judgement.
 var finished := false
