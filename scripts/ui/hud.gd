@@ -7,15 +7,19 @@ extends Control
 const STANDARD_POPUPS: Array[Texture2D] = [
 	null,
 	null,
+	null,
 	preload("res://assets/skins/neptune/standard/judgements/hit100-1.png"),
 	preload("res://assets/skins/neptune/standard/judgements/hit50-1.png"),
+	null,
 	preload("res://assets/skins/neptune/standard/judgements/hit0-1.png"),
 ]
 const MANIA_POPUPS: Array[Texture2D] = [
 	null,
+	preload("res://assets/skins/neptune/mania/mania-hit300g-1@2x.png"),
 	preload("res://assets/skins/neptune/mania/mania-hit300-1@2x.png"),
 	preload("res://assets/skins/neptune/mania/mania-hit200-1@2x.png"),
 	preload("res://assets/skins/neptune/mania/mania-hit100-1@2x.png"),
+	preload("res://assets/skins/neptune/mania/mania-hit50-1@2x.png"),
 	preload("res://assets/skins/neptune/mania/mania-hit0-1@2x.png"),
 ]
 ## Neptune skin.ini [Mania] ScorePosition: judgement height on a 480 px tall screen.

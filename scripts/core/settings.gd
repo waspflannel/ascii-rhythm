@@ -5,6 +5,8 @@ const PATH := "user://settings.cfg"
 const DEFAULTS := {
 	"audio": {"offset_ms": 0, "volume": 1.0},
 	"dither": {"pixel_scale": 3, "matrix_size": 4},
+	## osu!lazer-style scroll speed, 1 to 40; F3 and F4 change it in game.
+	"mania": {"scroll_speed": 20},
 }
 
 var _config := ConfigFile.new()

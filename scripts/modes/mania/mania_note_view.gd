@@ -1,10 +1,13 @@
 class_name ManiaNoteView
 extends HitObjectView
-## A mania note. Its parent is the lane, with the origin on the hit line, and
-## the note falls down towards it. A hold note is judged twice: once on press
-## and once on release.
+## A mania note. Its parent is the playfield, with the origin on the judgement line,
+## and the note falls down towards it. A hold note is judged twice: its head on press
+## and its tail on release (or as MAX if the key is still down when the hold ends).
 
-## Pixels the note travels per second. The playfield sets this from settings.
+## osu!lazer judges hold releases with windows 1.5 times wider.
+const TAIL_LENIENCE := 1.5
+
+## Pixels the note travels per second. Play sets this from the scroll speed setting.
 var scroll_speed := 800.0
 
 ## Hold notes only: the head was hit and the key is being held.
@@ -16,14 +19,13 @@ var _held := false
 
 func _ready() -> void:
 	var note := data as ManiaNote
-	# Neptune's four-key skin uses blue outer lanes and white inner lanes.
-	if note.column > 0 and note.column < int(map.circle_size) - 1:
+	if ManiaStage.is_inner(note.column, (map as ManiaBeatmap).key_count()):
 		sprite.texture = preload("res://assets/skins/neptune/mania/note2.png")
 		body.texture = preload("res://assets/skins/neptune/mania/LN2.png")
 		tail.texture = preload("res://assets/skins/neptune/mania/T2.png")
 	for part in [sprite, body, tail]:
 		part.offset = Vector2(-part.texture.get_width() / 2.0, -part.texture.get_height())
-		part.scale = Vector2.ONE * 64.0 / part.texture.get_width()
+		part.scale = Vector2.ONE * ManiaStage.COLUMN_WIDTH / part.texture.get_width()
 	body.visible = note.is_hold()
 	tail.visible = note.is_hold()
 	update_view(note.time - 1.0)
@@ -38,12 +40,12 @@ func update_view(t: float) -> void:
 		body.scale.y = length / body.texture.get_height()
 		tail.position.y = -length
 	if _held:
-		if t > note.end_time + hit_windows()[2]:
-			# No release inside the tail window is a miss.
-			_finish(Judgement.MISS)
+		# Holding through the end is a perfect tail, as in osu!lazer.
+		if t >= note.end_time:
+			_finish(Judgement.MAX)
 		return
 	if is_missed(t):
-		_finish(Judgement.MISS) # A missed hold head misses the whole hold.
+		miss()
 
 
 func press(t: float) -> bool:
@@ -52,23 +54,41 @@ func press(t: float) -> bool:
 	var judgement := judge(t)
 	if judgement == Judgement.NONE:
 		return false
-	if (data as ManiaNote).is_hold() and judgement != Judgement.MISS:
-		_held = true
-		judged.emit(judgement)
-	else:
+	if not (data as ManiaNote).is_hold():
 		_finish(judgement)
+	elif judgement == Judgement.MISS:
+		miss()
+	else:
+		_held = true
+		judged.emit(judgement) # The head; the tail is judged on release.
 	return true
 
 
 func release(t: float) -> void:
 	if not _held or finished:
 		return
-	var judgement := judge_at(data.end_time, t)
+	var judgement := judge_at(data.end_time, t, TAIL_LENIENCE)
 	# NONE here means the key came up before the tail window opened.
 	_finish(Judgement.MISS if judgement == Judgement.NONE else judgement)
 
 
-## osu!mania windows: 300, 200 and 100, which are tighter than standard.
+## A hold that was never hit misses both its head and its tail.
+func miss() -> void:
+	if (data as ManiaNote).is_hold() and not _held and not finished:
+		judged.emit(Judgement.MISS)
+	_finish(Judgement.MISS)
+
+
+## osu!mania windows from OD: MAX, 300, 200, 100 and 50.
 func hit_windows() -> Array[float]:
 	var od := map.overall_difficulty
-	return [(64.0 - 3.0 * od) / 1000.0, (97.0 - 3.0 * od) / 1000.0, (127.0 - 3.0 * od) / 1000.0]
+	return [0.016, (64.0 - 3.0 * od) / 1000.0, (97.0 - 3.0 * od) / 1000.0, (127.0 - 3.0 * od) / 1000.0, (151.0 - 3.0 * od) / 1000.0]
+
+
+func hit_tiers() -> Array[Judgement]:
+	return [Judgement.MAX, Judgement.PERFECT, Judgement.GREAT, Judgement.GOOD, Judgement.MEH]
+
+
+## Presses up to this early are misses rather than ignored.
+func miss_window() -> float:
+	return (188.0 - 3.0 * map.overall_difficulty) / 1000.0

@@ -2,9 +2,12 @@ class_name RunScore
 extends RefCounted
 ## osu!-like score, combo, accuracy and HP for one run, fed one judgement at a time.
 
-## Hit values indexed by HitObjectView.Judgement: NONE, PERFECT, GREAT, GOOD, MISS.
-const STANDARD_VALUES: Array[int] = [0, 300, 100, 50, 0]
-const MANIA_VALUES: Array[int] = [0, 300, 200, 100, 0]
+## Hit values indexed by HitObjectView.Judgement: NONE, MAX, PERFECT, GREAT, GOOD, MEH, MISS.
+## A zero outside NONE and MISS means the mode never gives that judgement.
+const STANDARD_VALUES: Array[int] = [0, 0, 300, 100, 50, 0, 0]
+## Accuracy counts MAX as 300, as osu!mania does; score gives it 320.
+const MANIA_VALUES: Array[int] = [0, 300, 300, 200, 100, 50, 0]
+const MANIA_SCORE_VALUES: Array[int] = [0, 320, 300, 200, 100, 50, 0]
 
 var score := 0
 var combo := 0
@@ -15,12 +18,14 @@ var accuracy := 1.0
 var hp := 1.0
 var failed := false
 ## Judgements so far, indexed by HitObjectView.Judgement.
-var counts: Array[int] = [0, 0, 0, 0, 0]
+var counts: Array[int] = [0, 0, 0, 0, 0, 0, 0]
 ## The map this run is scored against.
 var map: Beatmap
 
 var _values := STANDARD_VALUES
 var _value_sum := 0
+## Mania only: the MANIA_SCORE_VALUES sum.
+var _score_sum := 0
 var _judged := 0
 ## Mania only: judgements in a full run (one per note, two per hold), so score tops out at 1,000,000.
 var _mania_total := 0
@@ -50,7 +55,8 @@ func add(judgement: HitObjectView.Judgement) -> void:
 	_judged += 1
 	accuracy = _value_sum / (300.0 * _judged)
 	if map.mode == Beatmap.MODE_MANIA:
-		score = roundi(1000000.0 * _value_sum / (300.0 * maxi(_mania_total, 1)))
+		_score_sum += MANIA_SCORE_VALUES[judgement]
+		score = roundi(1000000.0 * _score_sum / (320.0 * maxi(_mania_total, 1)))
 	else:
 		# ScoreV1: the combo before this hit raises its value.
 		score += value + int(value * maxi(combo - 1, 0) * _difficulty / 25.0)
@@ -60,10 +66,12 @@ func add(judgement: HitObjectView.Judgement) -> void:
 	# swap in osu!'s per-map HP normalisation if fails feel off.
 	var drain := map.hp_drain / 10.0
 	match judgement:
-		HitObjectView.Judgement.PERFECT:
+		HitObjectView.Judgement.MAX, HitObjectView.Judgement.PERFECT:
 			hp += 0.025 * (1.5 - drain)
 		HitObjectView.Judgement.GREAT:
 			hp += 0.01 * (1.5 - drain)
+		HitObjectView.Judgement.MEH:
+			hp -= 0.01 + 0.04 * drain
 		HitObjectView.Judgement.MISS:
 			hp -= 0.04 + 0.16 * drain
 	hp = clampf(hp, 0.0, 1.0)

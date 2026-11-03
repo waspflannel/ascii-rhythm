@@ -5,8 +5,9 @@ extends Beatmap
 const TYPE_HOLD := 128
 
 
+## osu!mania supports 1 to 18 keys.
 func key_count() -> int:
-	return int(circle_size)
+	return clampi(int(circle_size), 1, 18)
 
 
 func _parse_hit_object(parts: PackedStringArray) -> HitObject:

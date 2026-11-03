@@ -9,7 +9,9 @@ extends Node2D
 
 signal judged(judgement: Judgement)
 
-enum Judgement { NONE, PERFECT, GREAT, GOOD, MISS }
+## Hit tiers, best first. Each mode gives them its own values (see RunScore): standard
+## uses PERFECT, GREAT and GOOD for 300, 100 and 50; mania uses all five, MAX (320) to MEH (50).
+enum Judgement { NONE, MAX, PERFECT, GREAT, GOOD, MEH, MISS }
 
 ## The parsed object this view draws.
 var data: HitObject
@@ -45,11 +47,21 @@ func release(_t: float) -> void:
 	pass
 
 
-## Perfect, Great and Good windows in seconds either side of the hit time.
+## Hit windows in seconds either side of the hit time, one per hit_tiers() entry.
 ## osu! standard values from OD; modes with their own windows override this.
 func hit_windows() -> Array[float]:
 	var od := map.overall_difficulty
 	return [(80.0 - 6.0 * od) / 1000.0, (140.0 - 8.0 * od) / 1000.0, (200.0 - 10.0 * od) / 1000.0]
+
+
+## The judgement each hit window gives, best first.
+func hit_tiers() -> Array[Judgement]:
+	return [Judgement.PERFECT, Judgement.GREAT, Judgement.GOOD]
+
+
+## How early an input still counts. Inputs inside it but outside every hit window miss.
+func miss_window() -> float:
+	return hit_windows().back()
 
 
 ## Judges a press at song time t against the hit time.
@@ -57,22 +69,23 @@ func judge(t: float) -> Judgement:
 	return judge_at(data.time, t)
 
 
-## Judges an input at song time t against target. NONE means the input is too
-## early to count, so it should be ignored.
-func judge_at(target: float, t: float) -> Judgement:
-	var windows := hit_windows()
-	if t < target - windows[2]:
+## Judges an input at song time t against target, with every window scaled by
+## lenience. NONE means the input is too early to count, so it should be ignored.
+func judge_at(target: float, t: float, lenience := 1.0) -> Judgement:
+	if t < target - miss_window() * lenience:
 		return Judgement.NONE
 	var offset := absf(t - target)
+	var windows := hit_windows()
+	var tiers := hit_tiers()
 	for i in windows.size():
-		if offset <= windows[i]:
-			return [Judgement.PERFECT, Judgement.GREAT, Judgement.GOOD][i]
+		if offset <= windows[i] * lenience:
+			return tiers[i]
 	return Judgement.MISS
 
 
-## True once the Good window has passed without a hit.
+## True once the last hit window has passed without a hit.
 func is_missed(t: float) -> bool:
-	return t > data.time + hit_windows()[2]
+	return t > data.time + hit_windows().back()
 
 
 ## Cursor in the parent's space. In standard the parent is the playfield, so this is osu! pixels.
