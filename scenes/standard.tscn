@@ -4,7 +4,6 @@
 
 [node name="Standard" instance=ExtResource("1_play")]
 mode_name = "Standard"
-beatmap_path = "res://beatmaps/653534 Panda Eyes - ILY/Panda Eyes - ILY (M a r v o l l o) [Fanteer's Final Level].osu"
 
 [node name="ModeLabel" parent="UI" index="0"]
 text = "Standard / AUTOPLAY"
