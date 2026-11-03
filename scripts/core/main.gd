@@ -1,11 +1,12 @@
 extends Control
-## Root scene. Hosts the menu, song select and gameplay screens in a SubViewport
+## Root scene. Hosts the menu, song select, gameplay and results screens in a SubViewport
 ## shown through the dither shader.
 
 const MENU := preload("res://scenes/main_menu.tscn")
 const SONG_SELECT := preload("res://scenes/song_select.tscn")
 const MANIA := preload("res://scenes/mania.tscn")
 const STANDARD := preload("res://scenes/standard.tscn")
+const RESULTS := preload("res://scenes/results.tscn")
 
 
 func _ready() -> void:
@@ -44,6 +45,16 @@ func _show_play(path: String) -> void:
 	GameState.map_path = path
 	var play := (MANIA if GameState.mode == Beatmap.MODE_MANIA else STANDARD).instantiate()
 	play.beatmap_path = path
-	# Back, fail and song end can all ask to leave; only the first one counts.
+	# Back skips the results; the HUD's end-of-run fade dies with the play screen.
 	play.back_requested.connect(_show_song_select.bind(GameState.mode), CONNECT_DEFERRED | CONNECT_ONE_SHOT)
+	play.run_finished.connect(_show_results, CONNECT_DEFERRED | CONNECT_ONE_SHOT)
 	_replace_screen(play)
+
+
+func _show_results(score: RunScore) -> void:
+	var results := RESULTS.instantiate()
+	results.score = score
+	_replace_screen(results)
+	# Retry replays the same map; Back reopens song select on it (see GameState.map_path).
+	results.retry_requested.connect(_show_play.bind(score.map.path), CONNECT_DEFERRED | CONNECT_ONE_SHOT)
+	results.back_requested.connect(_show_song_select.bind(GameState.mode), CONNECT_DEFERRED | CONNECT_ONE_SHOT)

@@ -14,8 +14,11 @@ var accuracy := 1.0
 ## 0 to 1. The run fails when it reaches 0.
 var hp := 1.0
 var failed := false
+## Judgements so far, indexed by HitObjectView.Judgement.
+var counts: Array[int] = [0, 0, 0, 0, 0]
+## The map this run is scored against.
+var map: Beatmap
 
-var _map: Beatmap
 var _values := STANDARD_VALUES
 var _value_sum := 0
 var _judged := 0
@@ -25,8 +28,8 @@ var _mania_total := 0
 var _difficulty := 0
 
 
-func _init(map: Beatmap) -> void:
-	_map = map
+func _init(p_map: Beatmap) -> void:
+	map = p_map
 	var objects := map.hit_objects
 	if map.mode == Beatmap.MODE_MANIA:
 		_values = MANIA_VALUES
@@ -41,11 +44,12 @@ func _init(map: Beatmap) -> void:
 func add(judgement: HitObjectView.Judgement) -> void:
 	if failed or judgement == HitObjectView.Judgement.NONE:
 		return
+	counts[judgement] += 1
 	var value := _values[judgement]
 	_value_sum += value
 	_judged += 1
 	accuracy = _value_sum / (300.0 * _judged)
-	if _map.mode == Beatmap.MODE_MANIA:
+	if map.mode == Beatmap.MODE_MANIA:
 		score = roundi(1000000.0 * _value_sum / (300.0 * maxi(_mania_total, 1)))
 	else:
 		# ScoreV1: the combo before this hit raises its value.
@@ -54,7 +58,7 @@ func add(judgement: HitObjectView.Judgement) -> void:
 	max_combo = maxi(max_combo, combo)
 	# ponytail: flat per-judgement HP scaled by the map's HP drain, no passive drain;
 	# swap in osu!'s per-map HP normalisation if fails feel off.
-	var drain := _map.hp_drain / 10.0
+	var drain := map.hp_drain / 10.0
 	match judgement:
 		HitObjectView.Judgement.PERFECT:
 			hp += 0.025 * (1.5 - drain)
@@ -64,3 +68,36 @@ func add(judgement: HitObjectView.Judgement) -> void:
 			hp -= 0.04 + 0.16 * drain
 	hp = clampf(hp, 0.0, 1.0)
 	failed = hp <= 0.0
+
+
+## osu! letter grade: SS, S, A, B, C or D, and F for a failed run (as osu!lazer does).
+func grade() -> String:
+	if failed:
+		return "F"
+	if accuracy >= 1.0:
+		return "SS"
+	if map.mode == Beatmap.MODE_MANIA:
+		# osu!mania grades on accuracy alone.
+		if accuracy > 0.95:
+			return "S"
+		if accuracy > 0.9:
+			return "A"
+		if accuracy > 0.8:
+			return "B"
+		if accuracy > 0.7:
+			return "C"
+		return "D"
+	# osu! standard grades on the share of 300s; misses and 50s hold back S, A and B.
+	var judged := float(maxi(_judged, 1))
+	var greats := counts[HitObjectView.Judgement.PERFECT] / judged
+	var mehs := counts[HitObjectView.Judgement.GOOD] / judged
+	var no_miss := counts[HitObjectView.Judgement.MISS] == 0
+	if greats > 0.9 and mehs < 0.01 and no_miss:
+		return "S"
+	if greats > 0.9 or (greats > 0.8 and no_miss):
+		return "A"
+	if greats > 0.8 or (greats > 0.7 and no_miss):
+		return "B"
+	if greats > 0.6:
+		return "C"
+	return "D"

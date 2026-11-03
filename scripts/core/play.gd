@@ -2,6 +2,8 @@ extends Control
 ## Shared beatmap simulation: parse, play audio, spawn views, and route player input.
 
 signal back_requested
+## The HUD emits this once the run is over: failed, or every object judged / the song ended.
+signal run_finished(score: RunScore)
 
 const CIRCLE := preload("res://scenes/hit_objects/hit_circle_view.tscn")
 const SLIDER := preload("res://scenes/hit_objects/slider_view.tscn")
