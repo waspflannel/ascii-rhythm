@@ -39,8 +39,8 @@ func update_view(t: float) -> void:
 		tail.position.y = -length
 	if _held:
 		if t > note.end_time + hit_windows()[2]:
-			# ponytail: holding past the tail window counts as a late release.
-			_finish(Judgement.GOOD)
+			# No release inside the tail window is a miss.
+			_finish(Judgement.MISS)
 		return
 	if is_missed(t):
 		_finish(Judgement.MISS) # A missed hold head misses the whole hold.
@@ -52,7 +52,7 @@ func press(t: float) -> bool:
 	var judgement := judge(t)
 	if judgement == Judgement.NONE:
 		return false
-	if (data as ManiaNote).is_hold():
+	if (data as ManiaNote).is_hold() and judgement != Judgement.MISS:
 		_held = true
 		judged.emit(judgement)
 	else:

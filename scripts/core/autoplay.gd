@@ -1,5 +1,5 @@
 extends RefCounted
-## Temporary simulation driver. Remove this helper and its Play call to remove autoplay.
+## Optional simulation driver, selected in Settings.
 
 
 static func drive(view: HitObjectView, t: float) -> void:
