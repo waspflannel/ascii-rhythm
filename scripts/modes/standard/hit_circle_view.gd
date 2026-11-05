@@ -11,6 +11,11 @@ const FLASH := Color(1.8, 1.8, 1.8)
 const FLASH_TIME := 0.04
 const POP_SCALE := 1.35
 const POP_TIME := 0.2
+## Approach dismiss on a hit: a Perfect bites inward to APPROACH_BITE_SCALE in
+## APPROACH_BITE_TIME; weaker hits fade it softly over APPROACH_SOFT_TIME.
+const APPROACH_BITE_SCALE := 0.65
+const APPROACH_BITE_TIME := 0.05
+const APPROACH_SOFT_TIME := 0.12
 ## Early-click shake: osu! pixel offsets, each SHAKE_STEP seconds (about 30 ms in all).
 const SHAKE := [6.0, -6.0, 3.0, 0.0]
 const SHAKE_STEP := 0.008
@@ -89,8 +94,19 @@ func play_exit() -> void:
 		tween.tween_property(self, "modulate:a", 0.0, 0.18)
 		tween.chain().tween_callback(queue_free)
 		return
-	approach.hide()
+	_dismiss_approach(last_judgement)
 	_pop(self).chain().tween_callback(queue_free)
+
+
+## Clears the approach circle after a hit: a Perfect snaps it inward hard and fast,
+## weaker judgements let it fade.
+func _dismiss_approach(judgement: Judgement) -> void:
+	var tween := create_tween().set_parallel().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	if judgement == Judgement.PERFECT:
+		tween.tween_property(approach, "scale", approach.scale * APPROACH_BITE_SCALE, APPROACH_BITE_TIME)
+		tween.tween_property(approach, "modulate:a", 0.0, APPROACH_BITE_TIME)
+	else:
+		tween.tween_property(approach, "modulate:a", 0.0, APPROACH_SOFT_TIME)
 
 
 ## Flashes part bright, then grows it with an out-expo ease while it fades out.

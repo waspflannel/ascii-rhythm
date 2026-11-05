@@ -19,8 +19,13 @@ const ROW_GAP := 8.0
 const DIM := Color(0.55, 0.55, 0.55)
 ## Seconds to cross-fade the background art.
 const ART_FADE := 0.35
-## Seconds to fade a song preview in.
+## Seconds to swell a song preview in, and to fade the last one out first.
 const PREVIEW_FADE := 0.6
+const PREVIEW_OUT := 0.12
+## Seconds the list or carousel takes to settle on a new selection.
+const SETTLE := 0.3
+## The newly selected row or card settles down from this scale.
+const SELECT_POP := 1.04
 const LIST_HINT := "↑ ↓  select      ENTER  open      ESC  back"
 const CAROUSEL_HINT := "← →  select      ENTER  play      ESC  back"
 
@@ -195,23 +200,30 @@ func _exit_tree() -> void:
 	Settings.save_settings()
 
 
-## Loops map's song from its preview point, fading in; maps without playable audio go quiet.
+## Loops map's song from its preview point, swelling in after a short fade-out of the last
+## one; maps without playable audio go quiet.
 func _play_preview(map: Beatmap) -> void:
 	var file := map.path.get_base_dir().path_join(map.audio_filename)
 	if file == _preview_file:
 		return
 	_preview_file = file
-	_preview_at = map.preview_time
 	if _preview_fade:
 		_preview_fade.kill()
+	_preview_fade = create_tween()
+	if _preview.playing:
+		_preview_fade.tween_property(_preview, "volume_linear", 0.0, PREVIEW_OUT)
+	_preview_fade.tween_callback(_swap_preview.bind(map))
+	_preview_fade.tween_property(_preview, "volume_linear", 1.0, PREVIEW_FADE).from(0.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func _swap_preview(map: Beatmap) -> void:
+	_preview_at = map.preview_time
 	_preview.stream = map.load_audio()
 	if _preview.stream == null:
 		_preview.stop()
 		return
 	_preview.volume_linear = 0.0
 	_preview.play(_preview_at)
-	_preview_fade = create_tween()
-	_preview_fade.tween_property(_preview, "volume_linear", 1.0, PREVIEW_FADE)
 
 
 ## Cross-fades the backdrop to texture and blends the theme to its colours; maps without
@@ -231,16 +243,20 @@ func _show_art(texture: Texture2D) -> void:
 	_art_fade.tween_property(back, "modulate:a", 0.0, ART_FADE)
 
 
-## Brightens child i of box, dims the rest and slides box's property to target.
+## Brightens child i of box, dims the rest and slides box's property to target, settling
+## with an out-expo ease while the selection eases down from a slight pop.
 func _focus(box: Container, i: int, property: String, target: float) -> void:
-	for child: Control in box.get_children():
-		var selected := child.get_index() == i
-		child.modulate = Color.WHITE if selected else DIM
-		child.get_node("Accent").visible = selected
 	if _slide:
 		_slide.kill()
-	_slide = create_tween()
-	_slide.tween_property(box, property, target, 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_slide = create_tween().set_parallel().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	_slide.tween_property(box, property, target, SETTLE)
+	for child: Control in box.get_children():
+		var selected := child.get_index() == i
+		child.get_node("Accent").visible = selected
+		child.pivot_offset = child.size / 2.0
+		child.scale = Vector2.ONE * SELECT_POP if selected else Vector2.ONE
+		_slide.tween_property(child, "scale", Vector2.ONE, SETTLE)
+		_slide.tween_property(child, "modulate", Color.WHITE if selected else DIM, SETTLE / 2.0)
 
 
 ## Adds one set per folder that has a non-empty .osu of GameState.mode; other modes are skipped.
