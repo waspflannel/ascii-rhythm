@@ -16,7 +16,8 @@ const LAYOUT_SIZE := Vector2(1280, 720)
 const PALETTE_SLOTS := 16
 
 ## True while the old screen fades out; screen requests in that window are dropped, so
-## repeated keys can't open two screens.
+## repeated keys can't open two screens. Clears one deferred step after the new screen is
+## built, so requests queued earlier in that frame are dropped too.
 var _leaving := false
 var _fade: Tween
 
@@ -73,7 +74,7 @@ func _change_screen(build: Callable) -> void:
 	_fade.tween_property(_dither, "shader_parameter/brightness", 0.0, FADE_OUT)
 	_fade.tween_callback(func() -> void:
 		build.call()
-		_leaving = false
+		set_deferred("_leaving", false)
 		_viewport.gui_disable_input = false)
 	_fade.tween_property(_dither, "shader_parameter/brightness", 1.0, FADE_IN)
 

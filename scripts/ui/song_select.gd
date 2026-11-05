@@ -162,7 +162,10 @@ func _difficulty_stats(map: Beatmap) -> String:
 	var size_stat := "CS %.1f   AR %.1f" % [map.circle_size, map.approach_rate]
 	if map is ManiaBeatmap:
 		size_stat = "%dK" % (map as ManiaBeatmap).key_count()
-	var seconds := int(map.hit_objects.back().time)
+	var end := 0.0
+	for object in map.hit_objects:
+		end = maxf(end, maxf(object.time, object.end_time))
+	var seconds := int(end)
 	return "%s   HP %.1f   OD %.1f   ·   %d objects   ·   %d:%02d" % [
 		size_stat, map.hp_drain, map.overall_difficulty, map.hit_objects.size(), seconds / 60, seconds % 60]
 
