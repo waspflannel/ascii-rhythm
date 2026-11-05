@@ -4,7 +4,10 @@ extends Node
 const PATH := "user://settings.cfg"
 const DEFAULTS := {
 	"audio": {"offset_ms": 0, "volume": 1.0},
-	"dither": {"pixel_scale": 3, "matrix_size": 4},
+	## palette: a Palette.DITHER name ("neptune", "crimson") or "rgb" for per-channel
+	## dithering. pixel_scale is the cell size at 1280x720; it grows with the window.
+	## beat_pulse nudges the brightness on each beat during play.
+	"dither": {"pixel_scale": 3, "matrix_size": 4, "palette": "neptune", "beat_pulse": true},
 	## osu!lazer-style scroll speed, 1 to 40; F3 and F4 change it in game.
 	"mania": {"scroll_speed": 20},
 }

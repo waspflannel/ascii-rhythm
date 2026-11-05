@@ -2,16 +2,16 @@ extends Node2D
 ## Draw the supplied skin digits, rather than replacing them with a font.
 
 const DIGITS: Array[Texture2D] = [
-    preload("res://assets/skins/neptune/standard/hitcircles/default-0@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-1@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-2@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-3@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-4@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-5@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-6@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-7@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-8@2x.png"),
-    preload("res://assets/skins/neptune/standard/hitcircles/default-9@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-0@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-1@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-2@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-3@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-4@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-5@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-6@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-7@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-8@2x.png"),
+    preload(SkinAssets.DIR + "standard/hitcircles/default-9@2x.png"),
 ]
 
 

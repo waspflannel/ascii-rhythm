@@ -1,9 +1,12 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/results.gd" id="1_results"]
 [ext_resource type="Script" path="res://scripts/ui/skin_number.gd" id="2_number"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/ranking-perfect@2x.png" id="3_perfect"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/ranking-retry@2x.png" id="4_retry"]
+[ext_resource type="Script" path="res://scripts/ui/space_backdrop.gd" id="5_backdrop"]
+[ext_resource type="PackedScene" path="res://scenes/ui/planet.tscn" id="6_planet"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/star@2x.png" id="7_star"]
 
 [node name="Results" type="Control"]
 texture_filter = 2
@@ -15,266 +18,347 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_results")
 
+[node name="Backdrop" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_backdrop")
+
+[node name="Art" type="TextureRect" parent="."]
+self_modulate = Color(0.3, 0.32, 0.42, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Planet" parent="." instance=ExtResource("6_planet")]
+modulate = Color(0.75, 0.78, 0.9, 1)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.76
+anchor_top = 0.46
+anchor_right = 0.76
+anchor_bottom = 0.46
+offset_left = -170.0
+offset_top = -170.0
+offset_right = 170.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="Map" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 48.0
-offset_top = 32.0
+offset_top = 34.0
 offset_right = -48.0
-offset_bottom = 124.0
+offset_bottom = 150.0
 grow_horizontal = 2
-theme_override_constants/separation = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Accent" type="Label" parent="Map"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+theme_override_font_sizes/font_size = 14
+text = "リザルト   ／   RESULTS"
 
 [node name="Title" type="Label" parent="Map"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 36
 text = "Title"
 text_overrun_behavior = 3
 
 [node name="Artist" type="Label" parent="Map"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.65, 0.65, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.62, 0.71, 1, 1)
 text = "Artist"
 text_overrun_behavior = 3
 
 [node name="Version" type="Label" parent="Map"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 18
+theme_type_variation = &"WideLabel"
 text = "[Version]  Mode"
 text_overrun_behavior = 3
 
-[node name="Stats" type="VBoxContainer" parent="."]
+[node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 0
 offset_left = 48.0
-offset_top = 148.0
-offset_right = 560.0
-offset_bottom = 600.0
+offset_top = 168.0
+offset_right = 600.0
+offset_bottom = 400.0
+mouse_filter = 2
+theme_type_variation = &"GlassPanel"
+
+[node name="Stats" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="ScoreBar" type="PanelContainer" parent="Panel/Stats"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"CaptionBar"
+
+[node name="Caption" type="Label" parent="Panel/Stats/ScoreBar"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 17
+text = "SCORE"
+
+[node name="Score" type="HBoxContainer" parent="Panel/Stats"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2_number")
+glyph_height = 60.0
+
+[node name="Hits" type="GridContainer" parent="Panel/Stats"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 28
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="Max" type="HBoxContainer" parent="Panel/Stats/Hits"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="Panel/Stats/Hits/Max"]
+custom_minimum_size = Vector2(84, 34)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Panel/Stats/Hits/Max"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 16
+text = "0"
+vertical_alignment = 1
+
+[node name="Count" type="HBoxContainer" parent="Panel/Stats/Hits/Max"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("2_number")
+glyph_height = 28.0
+
+[node name="Perfect" type="HBoxContainer" parent="Panel/Stats/Hits"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="Panel/Stats/Hits/Perfect"]
+custom_minimum_size = Vector2(84, 34)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Panel/Stats/Hits/Perfect"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 16
+text = "0"
+vertical_alignment = 1
+
+[node name="Count" type="HBoxContainer" parent="Panel/Stats/Hits/Perfect"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("2_number")
+glyph_height = 28.0
+
+[node name="Great" type="HBoxContainer" parent="Panel/Stats/Hits"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="Panel/Stats/Hits/Great"]
+custom_minimum_size = Vector2(84, 34)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Panel/Stats/Hits/Great"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 16
+text = "0"
+vertical_alignment = 1
+
+[node name="Count" type="HBoxContainer" parent="Panel/Stats/Hits/Great"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("2_number")
+glyph_height = 28.0
+
+[node name="Good" type="HBoxContainer" parent="Panel/Stats/Hits"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="Panel/Stats/Hits/Good"]
+custom_minimum_size = Vector2(84, 34)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Panel/Stats/Hits/Good"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 16
+text = "0"
+vertical_alignment = 1
+
+[node name="Count" type="HBoxContainer" parent="Panel/Stats/Hits/Good"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("2_number")
+glyph_height = 28.0
+
+[node name="Meh" type="HBoxContainer" parent="Panel/Stats/Hits"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="Panel/Stats/Hits/Meh"]
+custom_minimum_size = Vector2(84, 34)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Panel/Stats/Hits/Meh"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 16
+text = "0"
+vertical_alignment = 1
+
+[node name="Count" type="HBoxContainer" parent="Panel/Stats/Hits/Meh"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("2_number")
+glyph_height = 28.0
+
+[node name="Miss" type="HBoxContainer" parent="Panel/Stats/Hits"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="Panel/Stats/Hits/Miss"]
+custom_minimum_size = Vector2(84, 34)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="Panel/Stats/Hits/Miss"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 16
+text = "0"
+vertical_alignment = 1
+
+[node name="Count" type="HBoxContainer" parent="Panel/Stats/Hits/Miss"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("2_number")
+glyph_height = 28.0
+
+[node name="Totals" type="HBoxContainer" parent="Panel/Stats"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 24
+
+[node name="Accuracy" type="VBoxContainer" parent="Panel/Stats/Totals"]
+layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="ScoreCaption" type="Label" parent="Stats"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 16
-text = "SCORE"
-
-[node name="Score" type="HBoxContainer" parent="Stats"]
-custom_minimum_size = Vector2(0, 64)
+[node name="Bar" type="PanelContainer" parent="Panel/Stats/Totals/Accuracy"]
 layout_mode = 2
 mouse_filter = 2
-script = ExtResource("2_number")
-glyph_height = 64.0
+theme_type_variation = &"CaptionBar"
 
-[node name="Max" type="HBoxContainer" parent="Stats"]
+[node name="Caption" type="Label" parent="Panel/Stats/Totals/Accuracy/Bar"]
 layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 12
-
-[node name="Icon" type="TextureRect" parent="Stats/Max"]
-custom_minimum_size = Vector2(120, 36)
-layout_mode = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Name" type="Label" parent="Stats/Max"]
-custom_minimum_size = Vector2(64, 0)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 20
-text = "0"
-
-[node name="Count" type="HBoxContainer" parent="Stats/Max"]
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-script = ExtResource("2_number")
-glyph_height = 32.0
-
-[node name="Perfect" type="HBoxContainer" parent="Stats"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 12
-
-[node name="Icon" type="TextureRect" parent="Stats/Perfect"]
-custom_minimum_size = Vector2(120, 36)
-layout_mode = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Name" type="Label" parent="Stats/Perfect"]
-custom_minimum_size = Vector2(64, 0)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 20
-text = "0"
-
-[node name="Count" type="HBoxContainer" parent="Stats/Perfect"]
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-script = ExtResource("2_number")
-glyph_height = 32.0
-
-[node name="Great" type="HBoxContainer" parent="Stats"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 12
-
-[node name="Icon" type="TextureRect" parent="Stats/Great"]
-custom_minimum_size = Vector2(120, 36)
-layout_mode = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Name" type="Label" parent="Stats/Great"]
-custom_minimum_size = Vector2(64, 0)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 20
-text = "0"
-
-[node name="Count" type="HBoxContainer" parent="Stats/Great"]
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-script = ExtResource("2_number")
-glyph_height = 32.0
-
-[node name="Good" type="HBoxContainer" parent="Stats"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 12
-
-[node name="Icon" type="TextureRect" parent="Stats/Good"]
-custom_minimum_size = Vector2(120, 36)
-layout_mode = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Name" type="Label" parent="Stats/Good"]
-custom_minimum_size = Vector2(64, 0)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 20
-text = "0"
-
-[node name="Count" type="HBoxContainer" parent="Stats/Good"]
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-script = ExtResource("2_number")
-glyph_height = 32.0
-
-[node name="Meh" type="HBoxContainer" parent="Stats"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 12
-
-[node name="Icon" type="TextureRect" parent="Stats/Meh"]
-custom_minimum_size = Vector2(120, 36)
-layout_mode = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Name" type="Label" parent="Stats/Meh"]
-custom_minimum_size = Vector2(64, 0)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 20
-text = "0"
-
-[node name="Count" type="HBoxContainer" parent="Stats/Meh"]
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-script = ExtResource("2_number")
-glyph_height = 32.0
-
-[node name="Miss" type="HBoxContainer" parent="Stats"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 12
-
-[node name="Icon" type="TextureRect" parent="Stats/Miss"]
-custom_minimum_size = Vector2(120, 36)
-layout_mode = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Name" type="Label" parent="Stats/Miss"]
-custom_minimum_size = Vector2(64, 0)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 20
-text = "0"
-
-[node name="Count" type="HBoxContainer" parent="Stats/Miss"]
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-script = ExtResource("2_number")
-glyph_height = 32.0
-
-[node name="Accuracy" type="HBoxContainer" parent="Stats"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 12
-
-[node name="Caption" type="Label" parent="Stats/Accuracy"]
-custom_minimum_size = Vector2(150, 40)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 17
 text = "ACCURACY"
-vertical_alignment = 1
 
-[node name="Value" type="HBoxContainer" parent="Stats/Accuracy"]
+[node name="Value" type="HBoxContainer" parent="Panel/Stats/Totals/Accuracy"]
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
-size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("2_number")
-glyph_height = 32.0
+glyph_height = 34.0
 
-[node name="MaxCombo" type="HBoxContainer" parent="Stats"]
+[node name="MaxCombo" type="VBoxContainer" parent="Panel/Stats/Totals"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Bar" type="PanelContainer" parent="Panel/Stats/Totals/MaxCombo"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 12
+theme_type_variation = &"CaptionBar"
 
-[node name="Caption" type="Label" parent="Stats/MaxCombo"]
-custom_minimum_size = Vector2(150, 40)
+[node name="Caption" type="Label" parent="Panel/Stats/Totals/MaxCombo/Bar"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 17
 text = "MAX COMBO"
-vertical_alignment = 1
 
-[node name="Value" type="HBoxContainer" parent="Stats/MaxCombo"]
+[node name="Value" type="HBoxContainer" parent="Panel/Stats/Totals/MaxCombo"]
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
-size_flags_vertical = 4
 mouse_filter = 2
 script = ExtResource("2_number")
-glyph_height = 32.0
+glyph_height = 34.0
 overlap = 3.0
-
 [node name="Grade" type="TextureRect" parent="."]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -480.0
-offset_top = 120.0
-offset_right = -96.0
-offset_bottom = 520.0
-grow_horizontal = 0
+anchors_preset = -1
+anchor_left = 0.76
+anchor_top = 0.46
+anchor_right = 0.76
+anchor_bottom = 0.46
+offset_left = -150.0
+offset_top = -195.0
+offset_right = 150.0
+offset_bottom = 195.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
@@ -282,16 +366,19 @@ stretch_mode = 5
 [node name="GradeText" type="Label" parent="."]
 visible = false
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -480.0
-offset_top = 120.0
-offset_right = -96.0
-offset_bottom = 520.0
-grow_horizontal = 0
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
-theme_override_font_sizes/font_size = 320
+anchors_preset = -1
+anchor_left = 0.76
+anchor_top = 0.46
+anchor_right = 0.76
+anchor_bottom = 0.46
+offset_left = -150.0
+offset_top = -195.0
+offset_right = 150.0
+offset_bottom = 195.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"TitleLabel"
+theme_override_font_sizes/font_size = 230
 text = "F"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -299,15 +386,18 @@ vertical_alignment = 1
 [node name="Failed" type="Label" parent="."]
 visible = false
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -480.0
-offset_top = 528.0
-offset_right = -96.0
-offset_bottom = 588.0
-grow_horizontal = 0
-theme_override_colors/font_color = Color(0.6, 0.06, 0.08, 1)
+anchors_preset = -1
+anchor_left = 0.76
+anchor_top = 0.46
+anchor_right = 0.76
+anchor_bottom = 0.46
+offset_left = -200.0
+offset_top = 196.0
+offset_right = 200.0
+offset_bottom = 250.0
+grow_horizontal = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_colors/font_color = Color(0.86, 0.16, 0.27, 1)
 theme_override_font_sizes/font_size = 40
 text = "FAILED"
 horizontal_alignment = 1
@@ -316,18 +406,37 @@ vertical_alignment = 1
 [node name="Perfect" type="TextureRect" parent="."]
 visible = false
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -480.0
-offset_top = 528.0
-offset_right = -96.0
-offset_bottom = 588.0
-grow_horizontal = 0
+anchors_preset = -1
+anchor_left = 0.76
+anchor_top = 0.46
+anchor_right = 0.76
+anchor_bottom = 0.46
+offset_left = -200.0
+offset_top = 196.0
+offset_right = 200.0
+offset_bottom = 250.0
+grow_horizontal = 2
 mouse_filter = 2
 texture = ExtResource("3_perfect")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="Hint" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -44.0
+offset_right = 200.0
+offset_bottom = -22.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_type_variation = &"HintLabel"
+text = "R  retry      ESC  back"
+horizontal_alignment = 1
 
 [node name="Back" type="Button" parent="."]
 layout_mode = 1
@@ -335,13 +444,15 @@ anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 36.0
-offset_top = -100.0
-offset_right = 196.0
-offset_bottom = -24.0
+offset_top = -82.0
+offset_right = 216.0
+offset_bottom = -26.0
 grow_vertical = 0
-theme_override_font_sizes/font_size = 40
+theme_type_variation = &"BackButton"
 text = "BACK"
-flat = true
+icon = ExtResource("7_star")
+icon_alignment = 2
+expand_icon = true
 
 [node name="Retry" type="TextureButton" parent="."]
 layout_mode = 1

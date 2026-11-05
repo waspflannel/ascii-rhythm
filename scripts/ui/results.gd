@@ -1,38 +1,58 @@
 extends Control
 ## End-of-run results: map details, score, hit counts, accuracy, max combo and the
-## osu! grade, for a passed or failed run. The root scene handles screen changes.
+## osu! grade in front of the planet, for a passed or failed run, over the map's dimmed
+## background art. The root scene handles screen changes.
 
 signal retry_requested
 signal back_requested
 
 const HUD := preload("res://scripts/ui/hud.gd")
-## Grade letters by RunScore.grade(). Neptune has no F, so a failed run shows the letter as text.
+## Grade letters by RunScore.grade(). Neptune has no F, so a failed run shows the letter
+## as text in the same wide face as Neptune's letters.
 const GRADES := {
-	"SS": preload("res://assets/skins/neptune/hud/ranking-X@2x.png"),
-	"S": preload("res://assets/skins/neptune/hud/ranking-S@2x.png"),
-	"A": preload("res://assets/skins/neptune/hud/ranking-A@2x.png"),
-	"B": preload("res://assets/skins/neptune/hud/ranking-B@2x.png"),
-	"C": preload("res://assets/skins/neptune/hud/ranking-C@2x.png"),
-	"D": preload("res://assets/skins/neptune/hud/ranking-D@2x.png"),
+	"SS": preload(SkinAssets.DIR + "hud/ranking-X@2x.png"),
+	"S": preload(SkinAssets.DIR + "hud/ranking-S@2x.png"),
+	"A": preload(SkinAssets.DIR + "hud/ranking-A@2x.png"),
+	"B": preload(SkinAssets.DIR + "hud/ranking-B@2x.png"),
+	"C": preload(SkinAssets.DIR + "hud/ranking-C@2x.png"),
+	"D": preload(SkinAssets.DIR + "hud/ranking-D@2x.png"),
 }
 
 ## Set before adding to the tree.
 var score: RunScore
 
 ## Hit count rows in HitObjectView.Judgement order, starting at MAX.
-@onready var _hit_rows: Array[Node] = [$Stats/Max, $Stats/Perfect, $Stats/Great, $Stats/Good, $Stats/Meh, $Stats/Miss]
+@onready var _hit_rows: Array[Node] = [$Panel/Stats/Hits/Max, $Panel/Stats/Hits/Perfect, $Panel/Stats/Hits/Great, $Panel/Stats/Hits/Good, $Panel/Stats/Hits/Meh, $Panel/Stats/Hits/Miss]
 
 
 func _ready() -> void:
 	$Retry.pressed.connect(retry_requested.emit)
 	$Back.pressed.connect(back_requested.emit)
 	_show_map(score.map)
-	$Stats/Score.set_text("%08d" % score.score)
-	$Stats/Accuracy/Value.set_text("%.2f%%" % (score.accuracy * 100.0))
-	$Stats/MaxCombo/Value.set_text("%dx" % score.max_combo)
+	$Panel/Stats/Score.set_text("%08d" % score.score)
+	$Panel/Stats/Totals/Accuracy/Value.set_text("%.2f%%" % (score.accuracy * 100.0))
+	$Panel/Stats/Totals/MaxCombo/Value.set_text("%dx" % score.max_combo)
 	_show_hit_counts()
 	_show_grade()
+	# RETRY is Neptune art with no focus style, so light it up while hovered or focused.
+	for changed: Signal in [$Retry.focus_entered, $Retry.focus_exited, $Retry.mouse_entered, $Retry.mouse_exited]:
+		changed.connect(_light_retry)
 	$Retry.grab_focus()
+
+
+## The texture cropped to its visible pixels: Neptune's standard judgements sit small in
+## the middle of a 256 px square.
+static func _trimmed(texture: Texture2D) -> Texture2D:
+	if texture == null:
+		return null
+	var cropped := AtlasTexture.new()
+	cropped.atlas = texture
+	cropped.region = texture.get_image().get_used_rect()
+	return cropped
+
+
+func _light_retry() -> void:
+	$Retry.modulate = Palette.SKY if $Retry.has_focus() or $Retry.is_hovered() else Color.WHITE
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -51,6 +71,7 @@ func _show_map(map: Beatmap) -> void:
 	if map is ManiaBeatmap:
 		mode = "Mania %dK" % (map as ManiaBeatmap).key_count()
 	$Map/Version.text = "[%s]  %s" % [map.version, mode]
+	$Art.texture = map.load_background()
 
 
 ## One row per judgement the mode gives: the skin's judgement image where Neptune has one,
@@ -64,7 +85,7 @@ func _show_hit_counts() -> void:
 		var row := _hit_rows[i]
 		var miss := judgement == HitObjectView.Judgement.MISS
 		row.visible = miss or values[judgement] > 0
-		row.get_node("Icon").texture = icons[judgement]
+		row.get_node("Icon").texture = _trimmed(icons[judgement])
 		var label := str(values[judgement])
 		if miss:
 			label = "Miss"

@@ -6,6 +6,8 @@ var combo_colors: Array[Color] = []
 var slider_border := Color.WHITE
 var slider_track := Color.BLACK
 var tint_slider_ball := true
+## [Mania] ColourLight1, 2, ...: lane light colours, outer lane first.
+var mania_lights: Array[Color] = []
 ## Folder holding skin.ini.
 var folder := ""
 
@@ -34,10 +36,16 @@ static func from_file(path: String) -> RhythmSkin:
                 skin.slider_border = color
             elif key == "SliderTrackOverride":
                 skin.slider_track = color
+        elif section == "[Mania]" and key.begins_with("ColourLight"):
+            var parts := value.split(",")
+            if parts.size() >= 3:
+                skin.mania_lights.append(Color.from_rgba8(parts[0].to_int(), parts[1].to_int(), parts[2].to_int()))
         elif section == "[General]" and key == "AllowSliderBallTint":
             skin.tint_slider_ball = value.to_int() != 0
     if skin.combo_colors.is_empty():
         skin.combo_colors.append(Color.WHITE)
+    while skin.mania_lights.size() < 2:
+        skin.mania_lights.append(Color.WHITE)
     return skin
 
 

@@ -31,7 +31,7 @@ const MANIA_SCROLL_TIME := 11.485
 ## Leave empty to pick a local matching map (Normal is preferred for the demo).
 @export_file("*.osu") var beatmap_path := ""
 
-var _skin := RhythmSkin.from_file("res://assets/skins/neptune/skin.ini")
+var _skin := RhythmSkin.from_file(SkinAssets.INI)
 var beatmap: Beatmap
 var _live: Array[HitObjectView] = []
 var _next_object := 0
@@ -102,7 +102,7 @@ func _ready() -> void:
         var keys := (beatmap as ManiaBeatmap).key_count()
         _lane_keys = MANIA_KEYS.get(keys, MANIA_EXTRA_KEYS.slice(0, keys))
         _stage = ManiaStage.new()
-        _stage.setup(keys)
+        _stage.setup(keys, _skin.mania_lights)
         _field.add_child(_stage)
         _set_scroll_speed(int(Settings.get_value("mania", "scroll_speed")))
     _lead_in = maxf(2.0, beatmap.audio_lead_in)

@@ -2,15 +2,16 @@ class_name ManiaStage
 extends Node2D
 ## The mania stage behind the notes: a Neptune key image per column, the judgement
 ## line, stage edges, a lane light per held key and a hit flash per column. Neptune's
-## stage, hint and lighting images are blank, so the edges, lights and flashes are
-## plain dark red shapes. The origin is the left end of the judgement line; notes fall
+## stage, hint and lighting images are blank, so the edges are hairlines and the lights
+## and flashes are gradients in the skin's [Mania] ColourLight colours (blue outer lanes,
+## white inner ones). The origin is the left end of the judgement line; notes fall
 ## towards it from HIT_POSITION above.
 
 ## Neptune skin.ini [Mania] layout, in pixels on a 480 px tall screen.
 const COLUMN_WIDTH := 56.0
 const HIT_POSITION := 420.0
 const SCREEN_HEIGHT := 480.0
-const DARK_RED := Color(0.6, 0.06, 0.08)
+const EDGE := Color(0.95, 0.96, 1.0, 0.25)
 const FLASH_HEIGHT := 48.0
 const LIGHT_HEIGHT := 160.0
 const LIGHT_ALPHA := 0.35
@@ -31,24 +32,21 @@ static func is_inner(column: int, keys: int) -> bool:
 	return mini(column, keys - 1 - column) % 2 == 1
 
 
-## Builds the stage for a map with this many keys. Call before adding it to the tree.
-func setup(keys: int) -> void:
+## Builds the stage for a map with this many keys, lit with lights[0] on outer lanes and
+## lights[1] on inner ones (RhythmSkin.mania_lights). Call before adding it to the tree.
+func setup(keys: int, lights: Array[Color]) -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	var glow := GradientTexture2D.new()
-	glow.gradient = Gradient.new()
-	glow.gradient.set_color(0, Color(DARK_RED, 0.0))
-	glow.gradient.set_color(1, DARK_RED)
-	glow.fill_to = Vector2(0.0, 1.0)
-	glow.width = 1
+	var glows: Array[GradientTexture2D] = [_glow(lights[0]), _glow(lights[1])]
 	_light_fades.resize(keys)
 	for column in keys:
-		_add_light(column, glow)
+		var inner := int(is_inner(column, keys))
+		_add_light(column, glows[inner])
 		_add_key(column, keys)
-		_add_flash(column)
+		_add_flash(column, lights[inner])
 	var width := keys * COLUMN_WIDTH
-	_add_line(Vector2.ZERO, Vector2(width, 0.0), Color.WHITE) # skin.ini JudgementLine: 1
+	_add_line(Vector2.ZERO, Vector2(width, 0.0), Color.WHITE, 2.0) # skin.ini JudgementLine: 1
 	for x in [0.0, width]:
-		_add_line(Vector2(x, -HIT_POSITION), Vector2(x, SCREEN_HEIGHT - HIT_POSITION), DARK_RED)
+		_add_line(Vector2(x, -HIT_POSITION), Vector2(x, SCREEN_HEIGHT - HIT_POSITION), EDGE, 1.0)
 
 
 ## Swaps column's key image for its pressed or released look and lights its lane.
@@ -80,8 +78,8 @@ func _add_key(column: int, keys: int) -> void:
 	var right := column >= ceili(keys / 2.0)
 	var inner := is_inner(column, keys)
 	var image := (3 if inner else 4) if right else (2 if inner else 1)
-	_key_up.append(load("res://assets/skins/neptune/mania/key-%d.png" % image))
-	_key_down.append(load("res://assets/skins/neptune/mania/key-%dp.png" % image))
+	_key_up.append(load(SkinAssets.DIR + "mania/key-%d.png" % image))
+	_key_down.append(load(SkinAssets.DIR + "mania/key-%dp.png" % image))
 	var key := Sprite2D.new()
 	key.texture = _key_up[column]
 	key.centered = false
@@ -90,6 +88,17 @@ func _add_key(column: int, keys: int) -> void:
 	key.position = Vector2(column * COLUMN_WIDTH, -HIT_POSITION)
 	add_child(key)
 	_keys.append(key)
+
+
+## A vertical gradient from clear at the top to color at the bottom.
+func _glow(color: Color) -> GradientTexture2D:
+	var glow := GradientTexture2D.new()
+	glow.gradient = Gradient.new()
+	glow.gradient.set_color(0, Color(color, 0.0))
+	glow.gradient.set_color(1, color)
+	glow.fill_to = Vector2(0.0, 1.0)
+	glow.width = 1
+	return glow
 
 
 ## Drawn under the key, so the glow rises from the top of the receptor.
@@ -104,9 +113,9 @@ func _add_light(column: int, glow: GradientTexture2D) -> void:
 	_lights.append(light)
 
 
-func _add_flash(column: int) -> void:
+func _add_flash(column: int, color: Color) -> void:
 	var rect := ColorRect.new()
-	rect.color = DARK_RED
+	rect.color = Color(color, 0.7)
 	rect.modulate.a = 0.0
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rect.position = Vector2(column * COLUMN_WIDTH, -FLASH_HEIGHT)
@@ -115,9 +124,9 @@ func _add_flash(column: int) -> void:
 	_flashes.append(rect)
 
 
-func _add_line(from: Vector2, to: Vector2, color: Color) -> void:
+func _add_line(from: Vector2, to: Vector2, color: Color, width: float) -> void:
 	var line := Line2D.new()
 	line.points = PackedVector2Array([from, to])
-	line.width = 2.0
+	line.width = width
 	line.default_color = color
 	add_child(line)
