@@ -14,6 +14,8 @@ class TimingPoint:
 	var beat_length := 500.0
 	## Scroll / slider speed multiplier from inherited points.
 	var slider_velocity := 1.0
+	## False for inherited (green line) points, which only change slider velocity.
+	var uninherited := true
 
 
 ## Path of the .osu file. Audio and background paths are relative to its folder.
@@ -122,6 +124,7 @@ func _parse_timing_point(parts: PackedStringArray) -> void:
 		point.beat_length = beat_length
 	else:
 		# Inherited points store -100 / velocity in the beat length field.
+		point.uninherited = false
 		if not timing_points.is_empty():
 			point.beat_length = timing_points.back().beat_length
 		point.slider_velocity = clampf(-100.0 / beat_length, 0.1, 10.0)
@@ -135,6 +138,31 @@ func timing_at(t: float) -> TimingPoint:
 		if timing_points[i].time <= t:
 			return timing_points[i]
 	return timing_points[0] if not timing_points.is_empty() else TimingPoint.new()
+
+
+## Decodes the [Events] background image, or returns null if the map has none.
+func load_background() -> Texture2D:
+	var file := path.get_base_dir().path_join(background)
+	if background.is_empty() or not FileAccess.file_exists(file):
+		return null
+	# beatmaps/ is not imported, so decode the file directly. Maps often name PNGs .jpg,
+	# so trust the PNG signature over the extension.
+	var bytes := FileAccess.get_file_as_bytes(file)
+	var image := Image.new()
+	var png := bytes.slice(0, 4) == PackedByteArray([0x89, 0x50, 0x4E, 0x47])
+	var err := image.load_png_from_buffer(bytes) if png else image.load_jpg_from_buffer(bytes)
+	return ImageTexture.create_from_image(image) if err == OK else null
+
+
+## The uninherited timing point in effect at song time t: its time is where beats start.
+func beat_at(t: float) -> TimingPoint:
+	var beat: TimingPoint = null
+	for point in timing_points:
+		if point.time > t and beat != null:
+			break
+		if point.uninherited:
+			beat = point
+	return beat if beat != null else TimingPoint.new()
 
 
 func _set_field(key: String, value: String) -> void:

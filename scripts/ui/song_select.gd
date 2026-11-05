@@ -1,7 +1,8 @@
 extends Control
 ## Two-stage song select for GameState.mode: a vertical list of map sets (one per
 ## beatmaps/ folder), then a horizontal carousel of the chosen set's difficulties.
-## The root scene handles screen changes.
+## The focused map's background art fills the screen, dimmed, and a panel describes the
+## focused set or difficulty. The root scene handles screen changes.
 
 signal map_chosen(path: String)
 signal back_requested
@@ -14,6 +15,10 @@ const CARD_GAP := 24.0
 const ROW_HEIGHT := 96.0
 const ROW_GAP := 8.0
 const DIM := Color(0.55, 0.55, 0.55)
+## Seconds to cross-fade the background art.
+const ART_FADE := 0.35
+const LIST_HINT := "↑ ↓  select      ENTER  open      ESC  back"
+const CAROUSEL_HINT := "← →  select      ENTER  play      ESC  back"
 
 ## One Array[Beatmap] per map folder, easiest difficulty (fewest objects) first.
 var _sets: Array[Array] = []
@@ -22,6 +27,9 @@ var _art := {}
 var _set_index := 0
 var _index := 0
 var _slide: Tween
+var _art_fade: Tween
+## The art rect shown on top; the other one fades out under it.
+var _art_front: TextureRect
 
 @onready var _rows: VBoxContainer = $List/Rows
 @onready var _cards: HBoxContainer = $Carousel/Cards
@@ -29,11 +37,14 @@ var _slide: Tween
 
 func _ready() -> void:
 	$Back.pressed.connect(_back)
-	$ModeLabel.text = "Mania" if GameState.mode == Beatmap.MODE_MANIA else "Standard"
+	$ModeLabel.text = "MANIA" if GameState.mode == Beatmap.MODE_MANIA else "STANDARD"
+	_art_front = $ArtFront
 	# ponytail: parses every .osu on open; add the cached library index from DESIGN.md when folders get big.
 	_scan("res://beatmaps")
 	if _sets.is_empty():
 		$Empty.show()
+		$List/SetInfo.hide()
+		$Hint.text = "ESC  back"
 		$Back.grab_focus()
 		return
 	_sets.sort_custom(func(a: Array, b: Array) -> bool:
@@ -81,8 +92,7 @@ func _back() -> void:
 	if not $Carousel.visible:
 		back_requested.emit()
 		return
-	$List.show()
-	$Carousel.hide()
+	_show_stage(false)
 	_rows.get_child(_set_index).grab_focus()
 
 
@@ -101,9 +111,18 @@ func _open_set(i: int, diff := 0) -> void:
 		card.focus_entered.connect(_select.bind(j))
 		card.pressed.connect(map_chosen.emit.bind(map.path))
 		_cards.add_child(card)
-	$Carousel.show()
-	$List.hide()
+	var first: Beatmap = _sets[i][0]
+	$Carousel/SetTitle/Title.text = first.title
+	$Carousel/SetTitle/Artist.text = first.artist
+	_show_stage(true)
 	_cards.get_child(diff).grab_focus()
+
+
+## Shows the difficulty carousel or the set list, with that stage's key hints.
+func _show_stage(carousel: bool) -> void:
+	$Carousel.visible = carousel
+	$List.visible = not carousel
+	$Hint.text = CAROUSEL_HINT if carousel else LIST_HINT
 
 
 func _make_card(map: Beatmap, info: String) -> Button:
@@ -115,22 +134,63 @@ func _make_card(map: Beatmap, info: String) -> Button:
 	return card
 
 
-## Centers row i in the set list.
+## Centers row i in the set list and describes its set.
 func _select_set(i: int) -> void:
 	_set_index = i
 	_focus(_rows, i, "position:y", size.y / 2.0 - (i * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2.0))
+	var maps: Array = _sets[i]
+	var first: Beatmap = maps[0]
+	$List/SetInfo/Items/Title.text = first.title
+	$List/SetInfo/Items/Artist.text = first.artist
+	$List/SetInfo/Items/Mapper.text = "mapped by %s" % first.creator
+	$List/SetInfo/Items/Count.text = "%d %s" % [maps.size(), "DIFFICULTY" if maps.size() == 1 else "DIFFICULTIES"]
+	_show_art(_load_art(first))
 
 
-## Centers card i in the difficulty carousel.
+## Centers card i in the difficulty carousel and describes its difficulty.
 func _select(i: int) -> void:
 	_index = i
 	_focus(_cards, i, "position:x", size.x / 2.0 - (i * (CARD_WIDTH + CARD_GAP) + CARD_WIDTH / 2.0))
+	var map: Beatmap = _sets[_set_index][i]
+	$Carousel/DiffInfo/Items/Version.text = map.version
+	$Carousel/DiffInfo/Items/Stats.text = _difficulty_stats(map)
+	_show_art(_load_art(map))
+
+
+## One line of difficulty settings, object count and length for the info panel.
+func _difficulty_stats(map: Beatmap) -> String:
+	var size_stat := "CS %.1f   AR %.1f" % [map.circle_size, map.approach_rate]
+	if map is ManiaBeatmap:
+		size_stat = "%dK" % (map as ManiaBeatmap).key_count()
+	var end := 0.0
+	for object in map.hit_objects:
+		end = maxf(end, maxf(object.time, object.end_time))
+	var seconds := int(end)
+	return "%s   HP %.1f   OD %.1f   ·   %d objects   ·   %d:%02d" % [
+		size_stat, map.hp_drain, map.overall_difficulty, map.hit_objects.size(), seconds / 60, seconds % 60]
+
+
+## Cross-fades the backdrop to texture; maps without art fade out to the stars.
+func _show_art(texture: Texture2D) -> void:
+	if _art_front.texture == texture and _art_front.modulate.a > 0.0:
+		return
+	if _art_fade:
+		_art_fade.kill()
+	var back := _art_front
+	_art_front = $ArtBack if _art_front == $ArtFront else $ArtFront
+	move_child(_art_front, back.get_index())
+	_art_front.texture = texture
+	_art_fade = create_tween().set_parallel()
+	_art_fade.tween_property(_art_front, "modulate:a", 1.0 if texture else 0.0, ART_FADE)
+	_art_fade.tween_property(back, "modulate:a", 0.0, ART_FADE)
 
 
 ## Brightens child i of box, dims the rest and slides box's property to target.
 func _focus(box: Container, i: int, property: String, target: float) -> void:
 	for child: Control in box.get_children():
-		child.modulate = Color.WHITE if child.get_index() == i else DIM
+		var selected := child.get_index() == i
+		child.modulate = Color.WHITE if selected else DIM
+		child.get_node("Accent").visible = selected
 	if _slide:
 		_slide.kill()
 	_slide = create_tween()
@@ -158,14 +218,6 @@ func _scan(folder: String) -> void:
 
 func _load_art(map: Beatmap) -> Texture2D:
 	var path := map.path.get_base_dir().path_join(map.background)
-	if map.background.is_empty() or not FileAccess.file_exists(path):
-		return null
 	if not _art.has(path):
-		# beatmaps/ is not imported, so decode the file directly. Maps often name PNGs .jpg,
-		# so trust the PNG signature over the extension.
-		var bytes := FileAccess.get_file_as_bytes(path)
-		var image := Image.new()
-		var png := bytes.slice(0, 4) == PackedByteArray([0x89, 0x50, 0x4E, 0x47])
-		var err := image.load_png_from_buffer(bytes) if png else image.load_jpg_from_buffer(bytes)
-		_art[path] = ImageTexture.create_from_image(image) if err == OK else null
+		_art[path] = map.load_background()
 	return _art[path]

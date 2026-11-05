@@ -6,7 +6,7 @@ func _enter_tree() -> void:
     var map := StandardBeatmap.new()
     map.circle_size = 4.0
     map.approach_rate = 5.0
-    var skin := RhythmSkin.from_file("res://assets/skins/neptune/skin.ini")
+    var skin := RhythmSkin.from_file(SkinAssets.INI)
     $Field/Circle.setup(HitCircle.new(2.0, Vector2(100, 100)), map)
     $Field/Circle.combo_color = skin.combo_colors[0]
     var curve := HitSlider.build_curve("B", PackedVector2Array([Vector2(280,100),Vector2(340,40),Vector2(410,150),Vector2(490,100)]),230.0)

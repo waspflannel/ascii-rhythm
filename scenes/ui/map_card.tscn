@@ -1,39 +1,12 @@
-[gd_scene load_steps=4 format=3]
-
-[sub_resource type="StyleBoxFlat" id="StyleBox_normal"]
-bg_color = Color(0.03, 0.03, 0.05, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.278, 0.463, 1, 0.6)
-
-[sub_resource type="StyleBoxFlat" id="StyleBox_hover"]
-bg_color = Color(0.03, 0.03, 0.05, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(1, 1, 1, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBox_focus"]
-draw_center = false
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 1, 1, 1)
+[gd_scene format=3]
 
 [node name="MapCard" type="Button"]
 custom_minimum_size = Vector2(320, 220)
 clip_contents = true
-theme_override_styles/focus = SubResource("StyleBox_focus")
-theme_override_styles/hover = SubResource("StyleBox_hover")
-theme_override_styles/pressed = SubResource("StyleBox_hover")
-theme_override_styles/normal = SubResource("StyleBox_normal")
+theme_type_variation = &"CardButton"
 
 [node name="Art" type="TextureRect" parent="."]
-modulate = Color(0.5, 0.5, 0.5, 1)
+modulate = Color(0.5, 0.52, 0.62, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -44,15 +17,37 @@ mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
 
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -92.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Accent" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 5.0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.278, 0.463, 1, 1)
+
 [node name="Info" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = -84.0
-offset_right = -12.0
+offset_left = 18.0
+offset_top = -88.0
+offset_right = -14.0
 offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -62,22 +57,21 @@ alignment = 2
 
 [node name="Title" type="Label" parent="Info"]
 layout_mode = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_type_variation = &"HeadingLabel"
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 22
 text_overrun_behavior = 3
 
 [node name="Artist" type="Label" parent="Info"]
 layout_mode = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0.62, 0.71, 1, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
 text_overrun_behavior = 3
 
 [node name="Version" type="Label" parent="Info"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.278, 0.463, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_type_variation = &"WideLabel"
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 12
 text_overrun_behavior = 3

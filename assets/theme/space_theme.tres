@@ -1,0 +1,202 @@
+[gd_resource type="Theme" load_steps=20 format=3]
+
+[ext_resource type="FontVariation" path="res://assets/fonts/serif.tres" id="1_serif"]
+[ext_resource type="FontFile" path="res://assets/fonts/Michroma-Regular.ttf" id="2_wide"]
+[ext_resource type="SystemFont" path="res://assets/fonts/mono.tres" id="3_mono"]
+[ext_resource type="SystemFont" path="res://assets/fonts/jp.tres" id="4_jp"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/menu-button-background@2x.png" id="5_panel"]
+
+[sub_resource type="StyleBoxFlat" id="Button_normal"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0, 0, 0, 0.75)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.278, 0.463, 1, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="Button_hover"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0, 0, 0, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95, 0.96, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="Button_pressed"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 6.0
+bg_color = Color(0.278, 0.463, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95, 0.96, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.96, 1, 1)
+
+[sub_resource type="StyleBoxTexture" id="Menu_normal"]
+content_margin_left = 28.0
+content_margin_top = 8.0
+content_margin_right = 28.0
+content_margin_bottom = 8.0
+texture = ExtResource("5_panel")
+modulate_color = Color(0.55, 0.58, 0.68, 1)
+
+[sub_resource type="StyleBoxTexture" id="Menu_hover"]
+content_margin_left = 28.0
+content_margin_top = 8.0
+content_margin_right = 28.0
+content_margin_bottom = 8.0
+texture = ExtResource("5_panel")
+
+[sub_resource type="StyleBoxFlat" id="Menu_focus"]
+draw_center = false
+border_width_left = 4
+border_color = Color(0.278, 0.463, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="Back_normal"]
+content_margin_left = 12.0
+content_margin_top = 2.0
+content_margin_right = 12.0
+content_margin_bottom = 2.0
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="Back_hover"]
+content_margin_left = 12.0
+content_margin_top = 2.0
+content_margin_right = 12.0
+content_margin_bottom = 2.0
+bg_color = Color(0, 0, 0, 1)
+border_width_bottom = 2
+border_color = Color(0.278, 0.463, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="Glass"]
+content_margin_left = 20.0
+content_margin_top = 16.0
+content_margin_right = 20.0
+content_margin_bottom = 16.0
+bg_color = Color(0, 0, 0, 0.72)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95, 0.96, 1, 0.14)
+
+[sub_resource type="StyleBoxFlat" id="Bar"]
+content_margin_left = 10.0
+content_margin_top = 0.0
+content_margin_right = 10.0
+content_margin_bottom = 0.0
+bg_color = Color(0.278, 0.463, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="Card_normal"]
+bg_color = Color(0.02, 0.03, 0.1, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95, 0.96, 1, 0.12)
+
+[sub_resource type="StyleBoxFlat" id="Card_hover"]
+bg_color = Color(0.02, 0.03, 0.1, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.62, 0.71, 1, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="Separator"]
+content_margin_top = 1.0
+content_margin_bottom = 1.0
+bg_color = Color(0.95, 0.96, 1, 0.18)
+
+[resource]
+default_font = ExtResource("3_mono")
+default_font_size = 16
+AccentLabel/base_type = &"Label"
+AccentLabel/colors/font_color = Color(0.278, 0.463, 1, 1)
+AccentLabel/font_sizes/font_size = 16
+AccentLabel/fonts/font = ExtResource("4_jp")
+BackButton/base_type = &"Button"
+BackButton/colors/font_color = Color(0.95, 0.96, 1, 1)
+BackButton/colors/font_focus_color = Color(0.95, 0.96, 1, 1)
+BackButton/colors/font_hover_color = Color(0.62, 0.71, 1, 1)
+BackButton/colors/font_pressed_color = Color(0.278, 0.463, 1, 1)
+BackButton/colors/icon_hover_color = Color(0.62, 0.71, 1, 1)
+BackButton/constants/h_separation = 2
+BackButton/font_sizes/font_size = 34
+BackButton/fonts/font = ExtResource("1_serif")
+BackButton/styles/focus = SubResource("Back_hover")
+BackButton/styles/hover = SubResource("Back_hover")
+BackButton/styles/normal = SubResource("Back_normal")
+BackButton/styles/pressed = SubResource("Back_hover")
+Button/colors/font_color = Color(0.95, 0.96, 1, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(0, 0, 0, 1)
+Button/fonts/font = ExtResource("2_wide")
+Button/font_sizes/font_size = 14
+Button/styles/focus = SubResource("Focus")
+Button/styles/hover = SubResource("Button_hover")
+Button/styles/normal = SubResource("Button_normal")
+Button/styles/pressed = SubResource("Button_pressed")
+CaptionBar/base_type = &"PanelContainer"
+CaptionBar/styles/panel = SubResource("Bar")
+CaptionLabel/base_type = &"Label"
+CaptionLabel/colors/font_color = Color(0.62, 0.71, 1, 1)
+CaptionLabel/font_sizes/font_size = 15
+CaptionLabel/fonts/font = ExtResource("1_serif")
+CardButton/base_type = &"Button"
+CardButton/styles/focus = SubResource("Focus")
+CardButton/styles/hover = SubResource("Card_hover")
+CardButton/styles/normal = SubResource("Card_normal")
+CardButton/styles/pressed = SubResource("Card_hover")
+GlassPanel/base_type = &"PanelContainer"
+GlassPanel/styles/panel = SubResource("Glass")
+HSeparator/constants/separation = 12
+HSeparator/styles/separator = SubResource("Separator")
+HeadingLabel/base_type = &"Label"
+HeadingLabel/colors/font_color = Color(0.95, 0.96, 1, 1)
+HeadingLabel/font_sizes/font_size = 34
+HeadingLabel/fonts/font = ExtResource("1_serif")
+HintLabel/base_type = &"Label"
+HintLabel/colors/font_color = Color(0.55, 0.58, 0.68, 1)
+HintLabel/font_sizes/font_size = 13
+Label/colors/font_color = Color(0.95, 0.96, 1, 1)
+Label/colors/font_outline_color = Color(0, 0, 0, 1)
+HeroButton/base_type = &"Button"
+HeroButton/colors/font_color = Color(0.78, 0.81, 0.9, 1)
+HeroButton/colors/font_focus_color = Color(1, 1, 1, 1)
+HeroButton/colors/font_hover_color = Color(1, 1, 1, 1)
+HeroButton/colors/font_pressed_color = Color(0.62, 0.71, 1, 1)
+HeroButton/constants/h_separation = 18
+HeroButton/constants/icon_max_width = 44
+HeroButton/font_sizes/font_size = 20
+HeroButton/fonts/font = ExtResource("2_wide")
+HeroButton/styles/focus = SubResource("Menu_focus")
+HeroButton/styles/hover = SubResource("Menu_hover")
+HeroButton/styles/normal = SubResource("Menu_normal")
+HeroButton/styles/pressed = SubResource("Menu_hover")
+TitleLabel/base_type = &"Label"
+TitleLabel/colors/font_color = Color(0.95, 0.96, 1, 1)
+TitleLabel/font_sizes/font_size = 56
+TitleLabel/fonts/font = ExtResource("2_wide")
+WideLabel/base_type = &"Label"
+WideLabel/colors/font_color = Color(0.278, 0.463, 1, 1)
+WideLabel/font_sizes/font_size = 13
+WideLabel/fonts/font = ExtResource("2_wide")

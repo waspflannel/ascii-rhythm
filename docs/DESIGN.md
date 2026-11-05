@@ -1,7 +1,7 @@
 # ASCII Rhythm: Design Doc (working title)
 
 ## Vision
-A chill, meditative, aesthetic desktop rhythm game. Solo only: no multiplayer, no leaderboards. It plays real osu! beatmaps in two modes, with a minimal dark red dithered look.
+A chill, meditative, aesthetic desktop rhythm game. Solo only: no multiplayer, no leaderboards. It plays real osu! beatmaps in two modes, with a dithered space look: black, royal blue and white, after the Neptune skin.
 
 ## Platform and engine
 - Godot 4 (GDScript), desktop export (Windows first, Linux/macOS later), Steam-ready.
@@ -27,10 +27,10 @@ Each mode plays its own map type. Mania maps (Mode: 3) play in Mania, and standa
 - Local best scores are saved per difficulty (offline only).
 
 ## Visual style
-- **Gameplay screen:** pure black, no background art. Notes, circles, sliders and lanes are simple shapes in dark red, rendered through the dither shader.
-- **Dither post-process:** the game renders to a low-res SubViewport, then applies ordered Bayer dithering (4x4/8x8) to a small palette (black, dark crimson, optional dim off-white for text), then nearest-neighbour upscales. Optional subtle beat pulse driven by timing points (threshold or brightness nudge on each beat).
-- **Menus and song select:** this is where the Japanese and anime flavour lives (katakana accents, ASCII art, dithered map backgrounds). The visual design will be finalised later.
-- Monospace typography throughout.
+- **Gameplay screen:** pure black, no background art. Notes, circles, sliders and lanes use the skin's textures, rendered through the dither shader.
+- **Dither post-process:** the game renders to a SubViewport, then applies ordered Bayer dithering (2x2/4x4/8x8) to a small palette (default: Neptune's black, navy and royal blue ramp to white, plus the skin's combo colours and a crimson; a dark red palette and the per-channel look are options). Each screen change fades through the dither, and an optional subtle beat pulse nudges the brightness on each beat.
+- **Menus and song select:** the space anime flavour lives here: a drifting star field, Neptune's planet and orbits, katakana accents and dithered map backgrounds.
+- Typography: a wide sans for titles and grade letters, a Didone serif for captions and headings (as in Neptune's art), monospace for numbers and hints.
 
 ## Audio and timing
 - Song time comes from the audio playback position (with output latency compensation), never frame deltas.

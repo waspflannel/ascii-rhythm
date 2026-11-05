@@ -1,6 +1,7 @@
 extends Control
-## Gameplay HUD: score, combo, accuracy, HP, judgement popups and song progress.
-## Instanced under Play; it listens to Play's hit object views, so scoring stays out of play.gd.
+## Gameplay HUD: score, combo, accuracy, HP, judgement popups, song progress and the
+## dither's beat pulse. Instanced under Play; it listens to Play's hit object views, so
+## scoring stays out of play.gd.
 
 ## Indexed by HitObjectView.Judgement. Neptune hides standard 300s (hit300.png is blank),
 ## and every judgement's -0 frame is blank, so these use the -1 frame.
@@ -8,28 +9,33 @@ const STANDARD_POPUPS: Array[Texture2D] = [
 	null,
 	null,
 	null,
-	preload("res://assets/skins/neptune/standard/judgements/hit100-1.png"),
-	preload("res://assets/skins/neptune/standard/judgements/hit50-1.png"),
+	preload(SkinAssets.DIR + "standard/judgements/hit100-1.png"),
+	preload(SkinAssets.DIR + "standard/judgements/hit50-1.png"),
 	null,
-	preload("res://assets/skins/neptune/standard/judgements/hit0-1.png"),
+	preload(SkinAssets.DIR + "standard/judgements/hit0-1.png"),
 ]
 const MANIA_POPUPS: Array[Texture2D] = [
 	null,
-	preload("res://assets/skins/neptune/mania/mania-hit300g-1@2x.png"),
-	preload("res://assets/skins/neptune/mania/mania-hit300-1@2x.png"),
-	preload("res://assets/skins/neptune/mania/mania-hit200-1@2x.png"),
-	preload("res://assets/skins/neptune/mania/mania-hit100-1@2x.png"),
-	preload("res://assets/skins/neptune/mania/mania-hit50-1@2x.png"),
-	preload("res://assets/skins/neptune/mania/mania-hit0-1@2x.png"),
+	preload(SkinAssets.DIR + "mania/mania-hit300g-1@2x.png"),
+	preload(SkinAssets.DIR + "mania/mania-hit300-1@2x.png"),
+	preload(SkinAssets.DIR + "mania/mania-hit200-1@2x.png"),
+	preload(SkinAssets.DIR + "mania/mania-hit100-1@2x.png"),
+	preload(SkinAssets.DIR + "mania/mania-hit50-1@2x.png"),
+	preload(SkinAssets.DIR + "mania/mania-hit0-1@2x.png"),
 ]
 ## Neptune skin.ini [Mania] ScorePosition: judgement height on a 480 px tall screen.
 const MANIA_POPUP_Y := 220.0 / 480.0
+## Extra screen brightness on a beat, eased out over the beat.
+const PULSE := 0.07
+## The dither material main.tscn draws the screen with (one shared resource).
+const DITHER := preload("res://shaders/dither_material.tres")
 
 var _score: RunScore
 ## Hit objects that have given their last judgement; the map is done when all have.
 var _finished_objects := 0
 var _leaving := false
 var _mania_popup: Sprite2D
+var _beat_pulse := bool(Settings.get_value("dither", "beat_pulse"))
 
 @onready var _play: Control = get_parent()
 @onready var _music: AudioStreamPlayer = _play.get_node("Music")
@@ -54,6 +60,7 @@ func _start() -> void:
 	if _play.beatmap == null or _music.stream == null or _music.stream.get_length() <= 0.0:
 		return
 	_score = RunScore.new(_play.beatmap)
+	$MapTitle.text = "%s [%s]" % [_play.beatmap.title, _play.beatmap.version]
 	_refresh()
 	show()
 
@@ -63,7 +70,31 @@ func _process(delta: float) -> void:
 		return
 	_health.value = lerpf(_health.value, _score.hp, minf(1.0, delta * 8.0))
 	if _music.playing:
-		_progress.scale.x = clampf(_music.get_playback_position() / _music.stream.get_length(), 0.0, 1.0)
+		var length := _music.stream.get_length()
+		var at := _music.get_playback_position()
+		_progress.scale.x = clampf(at / length, 0.0, 1.0)
+		$Time.text = "%s / %s" % [_clock(at), _clock(length)]
+	_pulse()
+
+
+func _exit_tree() -> void:
+	DITHER.set_shader_parameter("pulse", 0.0)
+
+
+## Brightens the dither a little on each beat of the song, fading out before the next.
+func _pulse() -> void:
+	var amount := 0.0
+	if _beat_pulse and _music.playing:
+		var t := SongClock.get_time()
+		var beat: Beatmap.TimingPoint = _play.beatmap.beat_at(t)
+		if beat.beat_length > 0.0:
+			var phase := fposmod((t - beat.time) * 1000.0 / beat.beat_length, 1.0)
+			amount = PULSE * pow(1.0 - phase, 3.0)
+	DITHER.set_shader_parameter("pulse", amount)
+
+
+static func _clock(seconds: float) -> String:
+	return "%d:%02d" % [int(seconds) / 60, int(seconds) % 60]
 
 
 func _on_field_child(node: Node) -> void:

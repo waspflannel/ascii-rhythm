@@ -37,4 +37,4 @@ environment/defaults/default_clear_color=Color(0, 0, 0, 1)
 
 [gui]
 
-theme/custom_font="res://assets/fonts/mono.tres"
+theme/custom="res://assets/theme/space_theme.tres"

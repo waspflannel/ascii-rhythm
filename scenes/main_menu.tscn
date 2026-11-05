@@ -1,46 +1,22 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
-[ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/menu-background.jpg" id="2_background"]
-[ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/menu-button-background@2x.png" id="3_button"]
-[ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/mode-mania@2x.png" id="4_mania"]
-[ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/mode-osu@2x.png" id="5_osu"]
-
-[sub_resource type="StyleBoxTexture" id="StyleBox_normal"]
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
-texture = ExtResource("3_button")
-modulate_color = Color(0.6, 0.6, 0.6, 1)
-
-[sub_resource type="StyleBoxTexture" id="StyleBox_hover"]
-content_margin_left = 16.0
-content_margin_top = 10.0
-content_margin_right = 16.0
-content_margin_bottom = 10.0
-texture = ExtResource("3_button")
-
-[sub_resource type="StyleBoxFlat" id="StyleBox_focus"]
-draw_center = false
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 1)
+[ext_resource type="Script" path="res://scripts/ui/space_backdrop.gd" id="2_backdrop"]
+[ext_resource type="PackedScene" path="res://scenes/ui/planet.tscn" id="3_planet"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/mode-osu-small@2x.png" id="4_osu"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/mode-mania-small@2x.png" id="5_mania"]
 
 [node name="MainMenu" type="Control"]
+texture_filter = 2
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture_filter = 2
 script = ExtResource("1_menu")
 
-[node name="Background" type="TextureRect" parent="."]
-modulate = Color(0.45, 0.45, 0.45, 1)
+[node name="Backdrop" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -48,48 +24,133 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("2_background")
-expand_mode = 1
-stretch_mode = 6
+script = ExtResource("2_backdrop")
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="Planet" parent="." instance=ExtResource("3_planet")]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = -1
+anchor_left = 0.74
+anchor_top = 0.47
+anchor_right = 0.74
+anchor_bottom = 0.47
+offset_left = -190.0
+offset_top = -190.0
+offset_right = 190.0
+offset_bottom = 190.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Items" type="VBoxContainer" parent="Center"]
-layout_mode = 2
-theme_override_constants/separation = 6
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.07
+anchor_top = 0.5
+anchor_right = 0.07
+anchor_bottom = 0.5
+offset_top = -262.0
+offset_right = 620.0
+offset_bottom = 262.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+alignment = 1
 
-[node name="Title" type="Label" parent="Center/Items"]
+[node name="Accent" type="Label" parent="Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
+theme_type_variation = &"AccentLabel"
+text = "アスキー・リズム   ／   ほしぞらのリズム"
+
+[node name="EchoTop" type="Label" parent="Content"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_colors/font_color = Color(0, 0, 0, 0)
+theme_override_colors/font_outline_color = Color(0.95, 0.96, 1, 0.16)
+theme_override_constants/outline_size = 2
+theme_override_constants/line_spacing = -22
 text = "ASCII RHYTHM"
-horizontal_alignment = 1
 
-[node name="ManiaButton" type="Button" parent="Center/Items"]
+[node name="Title" type="Label" parent="Content"]
 layout_mode = 2
-custom_minimum_size = Vector2(440, 76)
-theme_override_font_sizes/font_size = 24
-theme_override_styles/focus = SubResource("StyleBox_focus")
-theme_override_styles/hover = SubResource("StyleBox_hover")
-theme_override_styles/pressed = SubResource("StyleBox_hover")
-theme_override_styles/normal = SubResource("StyleBox_normal")
-icon = ExtResource("4_mania")
-expand_icon = true
-text = "Mania"
+theme_type_variation = &"TitleLabel"
+theme_override_constants/line_spacing = -22
+text = "ASCII RHYTHM"
 
-[node name="StandardButton" type="Button" parent="Center/Items"]
+[node name="EchoBottom" type="Label" parent="Content"]
 layout_mode = 2
-custom_minimum_size = Vector2(440, 76)
-theme_override_font_sizes/font_size = 24
-theme_override_styles/focus = SubResource("StyleBox_focus")
-theme_override_styles/hover = SubResource("StyleBox_hover")
-theme_override_styles/pressed = SubResource("StyleBox_hover")
-theme_override_styles/normal = SubResource("StyleBox_normal")
-icon = ExtResource("5_osu")
-expand_icon = true
+theme_type_variation = &"TitleLabel"
+theme_override_colors/font_color = Color(0, 0, 0, 0)
+theme_override_colors/font_outline_color = Color(0.95, 0.96, 1, 0.16)
+theme_override_constants/outline_size = 2
+theme_override_constants/line_spacing = -22
+text = "ASCII RHYTHM"
+
+[node name="Tagline" type="Label" parent="Content"]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 20
+text = "A quiet rhythm game among the stars"
+
+[node name="Gap" type="Control" parent="Content"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Buttons" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Standard" type="Control" parent="Content/Buttons"]
+custom_minimum_size = Vector2(440, 62)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Button" type="Button" parent="Content/Buttons/Standard"]
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 62.0
+theme_type_variation = &"HeroButton"
 text = "Standard"
+icon = ExtResource("4_osu")
+expand_icon = true
+alignment = 0
+
+[node name="Mania" type="Control" parent="Content/Buttons"]
+custom_minimum_size = Vector2(440, 62)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Button" type="Button" parent="Content/Buttons/Mania"]
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 62.0
+theme_type_variation = &"HeroButton"
+text = "Mania"
+icon = ExtResource("5_mania")
+expand_icon = true
+alignment = 0
+
+[node name="Quit" type="Control" parent="Content/Buttons"]
+custom_minimum_size = Vector2(440, 62)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Button" type="Button" parent="Content/Buttons/Quit"]
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 62.0
+theme_type_variation = &"HeroButton"
+text = "Quit"
+alignment = 0
+
+[node name="Hint" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 52.0
+offset_top = -58.0
+offset_right = 700.0
+offset_bottom = -36.0
+grow_vertical = 0
+theme_type_variation = &"HintLabel"
+text = "↑ ↓  select      ENTER  confirm"

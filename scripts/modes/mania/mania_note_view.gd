@@ -20,9 +20,9 @@ var _held := false
 func _ready() -> void:
 	var note := data as ManiaNote
 	if ManiaStage.is_inner(note.column, (map as ManiaBeatmap).key_count()):
-		sprite.texture = preload("res://assets/skins/neptune/mania/note2.png")
-		body.texture = preload("res://assets/skins/neptune/mania/LN2.png")
-		tail.texture = preload("res://assets/skins/neptune/mania/T2.png")
+		sprite.texture = preload(SkinAssets.DIR + "mania/note2.png")
+		body.texture = preload(SkinAssets.DIR + "mania/LN2.png")
+		tail.texture = preload(SkinAssets.DIR + "mania/T2.png")
 	for part in [sprite, body, tail]:
 		part.offset = Vector2(-part.texture.get_width() / 2.0, -part.texture.get_height())
 		part.scale = Vector2.ONE * ManiaStage.COLUMN_WIDTH / part.texture.get_width()

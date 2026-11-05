@@ -3,20 +3,20 @@ extends HBoxContainer
 ## Draws text with the skin's score font: digits plus , . % and x.
 
 const GLYPHS := {
-	"0": preload("res://assets/skins/neptune/hud/score-0@2x.png"),
-	"1": preload("res://assets/skins/neptune/hud/score-1@2x.png"),
-	"2": preload("res://assets/skins/neptune/hud/score-2@2x.png"),
-	"3": preload("res://assets/skins/neptune/hud/score-3@2x.png"),
-	"4": preload("res://assets/skins/neptune/hud/score-4@2x.png"),
-	"5": preload("res://assets/skins/neptune/hud/score-5@2x.png"),
-	"6": preload("res://assets/skins/neptune/hud/score-6@2x.png"),
-	"7": preload("res://assets/skins/neptune/hud/score-7@2x.png"),
-	"8": preload("res://assets/skins/neptune/hud/score-8@2x.png"),
-	"9": preload("res://assets/skins/neptune/hud/score-9@2x.png"),
-	",": preload("res://assets/skins/neptune/hud/score-comma@2x.png"),
-	".": preload("res://assets/skins/neptune/hud/score-dot@2x.png"),
-	"%": preload("res://assets/skins/neptune/hud/score-percent@2x.png"),
-	"x": preload("res://assets/skins/neptune/hud/score-x@2x.png"),
+	"0": preload(SkinAssets.DIR + "hud/score-0@2x.png"),
+	"1": preload(SkinAssets.DIR + "hud/score-1@2x.png"),
+	"2": preload(SkinAssets.DIR + "hud/score-2@2x.png"),
+	"3": preload(SkinAssets.DIR + "hud/score-3@2x.png"),
+	"4": preload(SkinAssets.DIR + "hud/score-4@2x.png"),
+	"5": preload(SkinAssets.DIR + "hud/score-5@2x.png"),
+	"6": preload(SkinAssets.DIR + "hud/score-6@2x.png"),
+	"7": preload(SkinAssets.DIR + "hud/score-7@2x.png"),
+	"8": preload(SkinAssets.DIR + "hud/score-8@2x.png"),
+	"9": preload(SkinAssets.DIR + "hud/score-9@2x.png"),
+	",": preload(SkinAssets.DIR + "hud/score-comma@2x.png"),
+	".": preload(SkinAssets.DIR + "hud/score-dot@2x.png"),
+	"%": preload(SkinAssets.DIR + "hud/score-percent@2x.png"),
+	"x": preload(SkinAssets.DIR + "hud/score-x@2x.png"),
 }
 ## Height of a digit in screen pixels.
 @export var glyph_height := 40.0
