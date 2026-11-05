@@ -2,15 +2,17 @@ extends Node
 ## User preferences, persisted to user://settings.cfg.
 
 signal audio_changed
+## Emitted after a dither setting changes, so the screen filter and palette reload.
+signal dither_changed
 
 const PATH := "user://settings.cfg"
 const DEFAULTS := {
 	## volume is the master volume; music and sfx scale their buses under it, all 0 to 1.
 	"audio": {"offset_ms": 0, "volume": 1.0, "music_volume": 1.0, "sfx_volume": 1.0},
-	## palette: a Palette.DITHER name ("neptune", "crimson") or "rgb" for per-channel
-	## dithering. pixel_scale is the cell size at 1280x720; it grows with the window.
-	## beat_pulse nudges the brightness on each beat during play.
-	"dither": {"pixel_scale": 3, "matrix_size": 4, "palette": "neptune", "beat_pulse": true},
+	## filter: a Palette.FILTERS name. palette: a Palette.DITHER name ("neptune",
+	## "crimson") or "rgb" for per-channel dithering. beat_pulse nudges the brightness on
+	## each beat during play.
+	"dither": {"filter": "soft bayer", "palette": "neptune", "beat_pulse": true},
 	## osu!lazer-style scroll speed, 1 to 40; F3 and F4 change it in game.
 	"mania": {"scroll_speed": 20},
 	## The last map selected in song select, so mode select shows its art on the next

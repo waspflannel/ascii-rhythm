@@ -26,6 +26,7 @@ func _ready() -> void:
 	_section("MANIA")
 	_slider("Scroll speed", "mania", "scroll_speed", 1, 40, 1.0, "%d")
 	_section("DITHER")
+	_choice("Filter", "dither", "filter", Palette.FILTERS.keys())
 	_choice("Palette", "dither", "palette", PALETTES)
 	_choice("Beat pulse", "dither", "beat_pulse", [true, false])
 	# Ctrl + wheel changes the master volume on this screen too.
@@ -96,8 +97,10 @@ func _slider(caption: String, section: String, key: String, low: int, high: int,
 	return slider
 
 
-## Adds a button that steps through options: Enter or click for the next, or the left and
-## right arrows like the sliders. True and false show as ON and OFF.
+## Adds a button that steps through options: Enter for the next, a click on the left or
+## right half for the previous or next, or the left and right arrows like the sliders.
+## The screen redraws through the new dither setting straight away. True and false show
+## as ON and OFF.
 func _choice(caption: String, section: String, key: String, options: Array) -> void:
 	var button := Button.new()
 	_row(caption, button)
@@ -111,11 +114,17 @@ func _choice(caption: String, section: String, key: String, options: Array) -> v
 		var at := options.find(Settings.get_value(section, key))
 		Settings.set_value(section, key, options[posmod(at + by, options.size())])
 		Settings.save_settings()
-		MapTheme.apply_palette()
+		Settings.dither_changed.emit()
 		refresh.call()
 	refresh.call()
 	button.pressed.connect(step.bind(1))
 	button.gui_input.connect(func(event: InputEvent) -> void:
-		if event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		var click := event as InputEventMouseButton
+		if click and click.button_index == MOUSE_BUTTON_LEFT:
+			# Clicks step here, not through pressed, so each half steps its own way.
+			button.accept_event()
+			if click.pressed:
+				step.call(-1 if click.position.x < button.size.x / 2.0 else 1)
+		elif event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
 			button.accept_event()
 			step.call(-1 if event.is_action_pressed("ui_left") else 1))

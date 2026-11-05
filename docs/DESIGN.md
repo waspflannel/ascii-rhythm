@@ -28,7 +28,7 @@ Each mode plays its own map type. Mania maps (Mode: 3) play in Mania, and standa
 
 ## Visual style
 - **Gameplay screen:** pure black, no background art. Notes, circles, sliders and lanes use the skin's textures, rendered through the dither shader.
-- **Dither post-process:** the game renders to a SubViewport, then applies ordered Bayer dithering (2x2/4x4/8x8) to a small palette (default: Neptune's black, navy and royal blue ramp to white, plus the skin's combo colours and a crimson; a dark red palette and the per-channel look are options). Each screen change fades through the dither, and an optional subtle beat pulse nudges the brightness on each beat.
+- **Dither post-process:** the game renders to a SubViewport, then applies a screen filter, by default a soft ordered Bayer dither (stronger Bayer, scanlines, noise, flat palette, film grain and clean are options in Settings), to a small palette (default: Neptune's black, navy and royal blue ramp to white, plus the skin's combo colours and a crimson; a dark red palette and the per-channel look are options). Each screen change fades through the dither, and an optional subtle beat pulse nudges the brightness on each beat.
 - **Menus and song select:** the space anime flavour lives here: a drifting star field, katakana accents and dithered map backgrounds; each screen takes its accent colour from the focused or last selected map's art.
 - Typography: a wide sans for titles and grade letters, a Didone serif for captions and headings (as in Neptune's art), monospace for numbers and hints.
 
@@ -44,7 +44,7 @@ Each mode plays its own map type. Mania maps (Mode: 3) play in Mania, and standa
 4. Pause (resume, retry, quit)
 5. Fail screen
 6. Results
-7. Settings: keybinds, scroll speed (mania), audio offset, volume, dither options (palette, matrix size, beat pulse on/off), fullscreen or windowed
+7. Settings: keybinds, scroll speed (mania), audio offset, volume, dither options (filter, palette, beat pulse on/off), fullscreen or windowed
 
 ## Milestones
 1. **Foundation:** Godot project, beatmaps folder scan, .osz/.osu parsing, song select, audio playback with a precise clock, dither post-process.
