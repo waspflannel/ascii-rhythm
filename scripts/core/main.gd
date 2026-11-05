@@ -26,22 +26,26 @@ var _fade: Tween
 
 func _ready() -> void:
 	# MapTheme loads the dither palette.
-	_dither.set_shader_parameter("matrix_size", Settings.get_value("dither", "matrix_size"))
-	_apply_pixel_scale()
-	get_window().size_changed.connect(_apply_pixel_scale)
+	_apply_filter()
+	get_window().size_changed.connect(_apply_filter)
+	Settings.dither_changed.connect(_apply_filter)
 	_connect_menu($Screen/Viewport/MainMenu)
 	_dither.set_shader_parameter("brightness", 0.0)
 	_fade = create_tween()
 	_fade.tween_property(_dither, "shader_parameter/brightness", 1.0, 0.6)
 
 
-## The dither works in window pixels, so its cells grow with the window to keep the same
-## look at 1280x720, 1920x1080 and fullscreen.
-func _apply_pixel_scale() -> void:
+## Loads the Settings dither/filter into the shader. The dither works in window pixels, so
+## its cells grow with the window to keep the same look at 1280x720, 1920x1080 and
+## fullscreen.
+func _apply_filter() -> void:
+	var chosen := str(Settings.get_value("dither", "filter"))
+	var filter: Dictionary = Palette.FILTER_BASE.merged(Palette.FILTERS.get(chosen, {}), true)
 	var window := Vector2(get_window().size)
 	var scale_factor := minf(window.x / LAYOUT_SIZE.x, window.y / LAYOUT_SIZE.y)
-	var cell := maxf(1.0, roundf(float(Settings.get_value("dither", "pixel_scale")) * scale_factor))
-	_dither.set_shader_parameter("pixel_scale", cell)
+	filter["pixel_scale"] = maxf(1.0, roundf(filter["pixel_scale"] * scale_factor))
+	for parameter: String in filter:
+		_dither.set_shader_parameter(parameter, filter[parameter])
 
 
 func _connect_menu(menu: Control) -> void:

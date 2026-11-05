@@ -50,6 +50,7 @@ func _ready() -> void:
 			if box:
 				_track(box, "bg_color")
 				_track(box, "border_color")
+	Settings.dither_changed.connect(apply_palette)
 	apply_palette()
 
 

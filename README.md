@@ -18,12 +18,14 @@ From a terminal: `godot --path .` runs the game, `godot -e --path .` opens the e
 - `scripts/beatmap/hit_objects/`: parsed note data (`HitObject` base, `ManiaNote`, `HitCircle`, `Slider`, `Spinner`)
 - `scripts/modes/`: gameplay views (`HitObjectView` base, `mania/ManiaNoteView` and `mania/ManiaStage`, `standard/HitCircleView`, `SliderView`, `SpinnerView`), scenes in `scenes/hit_objects/`
 - `scripts/ui/`: menu and HUD scripts, including `SpaceBackdrop` (the drifting star field behind the menus)
-- `shaders/dither.gdshader`: Bayer ordered dithering of the whole screen through `shaders/dither_material.tres`, to a palette (each pixel mixes its two nearest palette colours) or per RGB channel; `brightness` drives screen fades and `pulse` the beat pulse
+- `shaders/dither.gdshader`: Bayer or noise dithering of the whole screen through `shaders/dither_material.tres`, to a palette (each pixel mixes its two nearest palette colours) or per RGB channel, with the strength, scanlines and grain the screen filter sets; `brightness` drives screen fades and `pulse` the beat pulse
 - `assets/fonts/`: Michroma (wide titles and grade letters) and Bodoni Moda (captions and headings), both SIL OFL (licences alongside), the system monospace font for numbers and hints, and a system Japanese font for katakana accents
 - `assets/theme/space_theme.tres`: the project theme (`gui/theme/custom`); screens pick styles by type variation (`TitleLabel`, `HeadingLabel`, `CaptionLabel`, `AccentLabel`, `SubLabel`, `HintLabel`, `WideLabel`, `HeroButton`, `BackButton`, `CardButton`, `GlassPanel`, `CaptionBar`)
 - `beatmaps/`: drop `.osz` files or map folders here (gitignored)
 
-Settings are saved to `user://settings.cfg` (on Windows, `%APPDATA%\Godot\app_userdata\ASCII Rhythm\`). The `[dither]` section takes `palette` (`neptune` by default, `crimson`, or `rgb` for the original per-channel look; palettes live in `scripts/core/palette.gd`), `pixel_scale` (dither cell size at 1280x720; it grows with the window), `matrix_size` (2, 4 or 8) and `beat_pulse` (true or false). `[history] last_map` is the last map selected in song select, whose art fills mode select on the next launch.
+Settings are saved to `user://settings.cfg` (on Windows, `%APPDATA%\Godot\app_userdata\ASCII Rhythm\`). The `[dither]` section takes `filter` (the screen filter, `soft bayer` by default; see below), `palette` (`neptune` by default, `crimson`, or `rgb` for the original per-channel look; palettes and filters live in `scripts/core/palette.gd`) and `beat_pulse` (true or false).
+
+The **Filter** carousel in Settings (Left/Right, Enter, or click either half) steps through the screen filters, strongest first, and the whole screen redraws through each one straight away: `bayer` (the original full 4x4 ordered dither), `soft bayer` (finer 8x8 cells at lower contrast), `scanlines` (a light dither under darkened alternate rows), `noise` (sparse noise dots instead of the Bayer grid), `flat` (palette colours only, no dots), `grain` (the screen's own colours under a light film grain) and `off` (clean). Dither cells grow with the window; the palette applies to the dithering filters and `flat`, and the beat pulse and screen fades work with every filter. `[history] last_map` is the last map selected in song select, whose art fills mode select on the next launch.
 
 ## Player input
 
