@@ -1,16 +1,17 @@
 extends Control
-## Mode selection: Standard, Mania, Settings or Quit under the title, over the last
+## Mode selection: Standard, Mania, Editor, Settings or Quit under the title, over the last
 ## selected map's dimmed art (or just the stars before any) and themed from it. The root
 ## scene handles screen changes.
 
 signal mania_selected
 signal standard_selected
+signal editor_selected
 signal settings_selected
 
 ## Pixels the highlighted button slides right.
 const SLIDE := 18.0
 
-@onready var _buttons: Array[Button] = [$Content/Buttons/Standard/Button, $Content/Buttons/Mania/Button, $Content/Buttons/Settings/Button, $Content/Buttons/Quit/Button]
+@onready var _buttons: Array[Button] = [$Content/Buttons/Standard/Button, $Content/Buttons/Mania/Button, $Content/Buttons/Editor/Button, $Content/Buttons/Settings/Button, $Content/Buttons/Quit/Button]
 
 
 func _ready() -> void:
@@ -18,6 +19,7 @@ func _ready() -> void:
 	MapTheme.retarget(GameState.map_art)
 	$Content/Buttons/Standard/Button.pressed.connect(standard_selected.emit)
 	$Content/Buttons/Mania/Button.pressed.connect(mania_selected.emit)
+	$Content/Buttons/Editor/Button.pressed.connect(editor_selected.emit)
 	$Content/Buttons/Settings/Button.pressed.connect(settings_selected.emit)
 	$Content/Buttons/Quit/Button.pressed.connect(get_tree().quit)
 	for button in _buttons:
