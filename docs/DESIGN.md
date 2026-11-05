@@ -29,6 +29,7 @@ Each mode plays its own map type. Mania maps (Mode: 3) play in Mania, and standa
 ## Visual style
 - **Gameplay screen:** pure black, no background art. Notes, circles, sliders and lanes use the skin's textures, rendered through the dither shader.
 - **Dither post-process:** the game renders to a SubViewport, then dithers it, by default a soft 8x8 ordered Bayer dither per colour channel with a light tint towards Neptune's royal blue. Settings picks the dither colour (any colour, or the map's) and every knob: mode (per channel, a palette built from the colour's ramp plus the skin's combo colours, or off), pattern (Bayer, noise, moving grain, flat), strength, matrix and cell size, levels, shades, scanlines and film grain. Each screen change fades through the dither, and an optional subtle beat pulse nudges the brightness on each beat.
+- **Gameplay feel:** crisp and tactile without clutter: raw (unaccumulated) mouse input, a flash-and-pop on hits, a tiny local shake on too-early clicks, a cursor that grows while a hit key is held, quick mania key flashes with slow release fades, and judgements that punch in (misses drop quietly). No particles, trails or screen shake.
 - **Menus and song select:** the space anime flavour lives here: a drifting star field, katakana accents and dithered map backgrounds; each screen takes its accent colour from the focused or last selected map's art.
 - Typography: a wide sans for titles and grade letters, a Didone serif for captions and headings (as in Neptune's art), monospace for numbers and hints.
 

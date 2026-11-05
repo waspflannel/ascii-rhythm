@@ -28,6 +28,8 @@ const MANIA_KEYS := {
 const MANIA_EXTRA_KEYS := [KEY_A, KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON, KEY_APOSTROPHE, KEY_Q, KEY_W, KEY_E, KEY_R, KEY_U, KEY_I, KEY_O, KEY_P]
 ## osu!lazer scroll speed: notes take this many seconds / speed to fall to the judgement line.
 const MANIA_SCROLL_TIME := 11.485
+## Standard cursor size while a hit key or button is held.
+const CURSOR_HELD_SCALE := 1.2
 
 @export var mode_name := "Play"
 ## Leave empty to pick a local matching map (Normal is preferred for the demo).
@@ -59,9 +61,14 @@ var _hit_sound: AudioStreamPlayer
 @onready var _objects_value: Label = $UI/Stats/ObjectsValue
 @onready var _judgement_values: Array[Label] = [$UI/Stats/PerfectValue, $UI/Stats/GreatValue, $UI/Stats/GoodValue, $UI/Stats/MissValue]
 @onready var _cursor: Sprite2D = $Playfield/Cursor
+@onready var _cursor_scale := _cursor.scale
+var _cursor_tween: Tween
 
 
 func _ready() -> void:
+    # Every mouse motion event reaches _input, so the cursor and hit tests use the latest
+    # position instead of one merged per frame. Restored on exit for the menus.
+    Input.use_accumulated_input = false
     $Pause.resumed.connect(_release_keys.bind(false))
     $Pause.retry_requested.connect(retry_requested.emit)
     $Pause.quit_requested.connect(back_requested.emit)
@@ -182,6 +189,9 @@ func _on_judged(judgement: HitObjectView.Judgement, view: HitObjectView) -> void
         _hit_sound.play()
         if view.data is ManiaNote:
             _stage.flash(view.data.column)
+    if view.data is ManiaNote:
+        # A hit hold note head leaves the view unfinished until its tail is judged.
+        _stage.set_holding(view.data.column, judgement != HitObjectView.Judgement.MISS and not view.finished)
 
 
 func _layout_playfield() -> void:
@@ -246,6 +256,7 @@ func _on_music_finished() -> void:
 
 func _exit_tree() -> void:
     SongClock.stop()
+    Input.use_accumulated_input = true
 
 
 func _map_paths(folder: String) -> Array[String]:
@@ -314,6 +325,8 @@ func _input(event: InputEvent) -> void:
         _pressed.erase(code)
     if _stage:
         _stage.set_pressed(_lane_keys.find(code), down)
+    else:
+        _update_cursor_hold()
     for view in _live:
         view.holding = _is_holding(view)
         if view.finished:
@@ -347,8 +360,19 @@ func _release_keys(all: bool) -> void:
             _pressed.erase(code)
             if _stage:
                 _stage.set_pressed(_lane_keys.find(code), false)
+    if not _stage:
+        _update_cursor_hold()
     var t := -_lead_in if _lead_in > 0.0 else SongClock.get_time()
     for view in _live:
         view.holding = _is_holding(view)
         if not view.holding:
             view.release(t)
+
+
+## Grows the standard cursor quickly while any hit key or button is down, easing back on release.
+func _update_cursor_hold() -> void:
+    if _cursor_tween:
+        _cursor_tween.kill()
+    var held := not _pressed.is_empty()
+    _cursor_tween = _cursor.create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+    _cursor_tween.tween_property(_cursor, "scale", _cursor_scale * (CURSOR_HELD_SCALE if held else 1.0), 0.05 if held else 0.15)

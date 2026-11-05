@@ -142,7 +142,17 @@ func _show_popup(judgement: HitObjectView.Judgement, view: HitObjectView) -> voi
 		popup.position = view.global_position
 	add_child(popup)
 	var tween := popup.create_tween()
-	tween.tween_property(popup, "scale", popup.scale * 1.15, 0.08)
+	if judgement == HitObjectView.Judgement.MISS:
+		# Misses drop quietly instead of punching in.
+		tween.set_parallel()
+		tween.tween_property(popup, "position:y", popup.position.y + 24.0 * _field.scale.x, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tween.tween_property(popup, "modulate:a", 0.0, 0.35).set_delay(0.25)
+		tween.chain().tween_callback(popup.queue_free)
+		return
+	# Hits punch in from 1.5x, then fade.
+	var base := popup.scale
+	popup.scale = base * 1.5
+	tween.tween_property(popup, "scale", base, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(popup, "modulate:a", 0.0, 0.35).set_delay(0.25)
 	tween.tween_callback(popup.queue_free)
 

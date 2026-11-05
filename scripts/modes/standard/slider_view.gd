@@ -110,6 +110,7 @@ func press(t: float) -> bool:
 		return false
 	var judgement := judge(t)
 	if judgement == Judgement.NONE:
+		shake()
 		return false
 	if judgement == Judgement.MISS:
 		_finish(Judgement.MISS)
@@ -122,8 +123,8 @@ func press(t: float) -> bool:
 func _resolve_head() -> void:
 	_head_done = true
 	approach.hide()
-	for part in [sprite, overlay, number]:
-		create_tween().tween_property(part, "modulate:a", 0.0, 0.12)
+	for part: Node2D in [sprite, overlay, number]:
+		_pop(part)
 
 
 func release(t: float) -> void:

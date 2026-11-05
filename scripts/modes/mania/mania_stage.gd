@@ -12,18 +12,27 @@ const COLUMN_WIDTH := 56.0
 const HIT_POSITION := 420.0
 const SCREEN_HEIGHT := 480.0
 const EDGE := Color(0.95, 0.96, 1.0, 0.25)
-const FLASH_HEIGHT := 48.0
+const FLASH_HEIGHT := 72.0
 const LIGHT_HEIGHT := 160.0
+## Lane light while its key is held, a little brighter while it holds a hit hold note.
 const LIGHT_ALPHA := 0.35
+const LIGHT_HOLD_ALPHA := 0.5
+## A key press starts the light here and settles it to the held level over PRESS_FLASH_TIME.
+const LIGHT_PRESS_ALPHA := 0.7
+const PRESS_FLASH_TIME := 0.07
+## Seconds a released lane light takes to fade (out-quint).
+const RELEASE_TIME := 0.35
 ## Pixels a pressed key sinks.
 const PRESS_OFFSET := 2.0
 
 var _keys: Array[Sprite2D] = []
 var _key_up: Array[Texture2D] = []
 var _key_down: Array[Texture2D] = []
-var _flashes: Array[ColorRect] = []
+var _flashes: Array[Sprite2D] = []
+var _flash_fades: Array[Tween] = []
 var _lights: Array[Sprite2D] = []
 var _light_fades: Array[Tween] = []
+var _holding: Array[bool] = []
 
 
 ## Neptune skins outer and inner lanes differently (blue and white in 4K). Counting in
@@ -38,11 +47,13 @@ func setup(keys: int, lights: Array[Color]) -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	var glows: Array[GradientTexture2D] = [_glow(lights[0]), _glow(lights[1])]
 	_light_fades.resize(keys)
+	_flash_fades.resize(keys)
+	_holding.resize(keys)
 	for column in keys:
 		var inner := int(is_inner(column, keys))
-		_add_light(column, glows[inner])
+		_lights.append(_add_glow(column, glows[inner], LIGHT_HEIGHT))
 		_add_key(column, keys)
-		_add_flash(column, lights[inner])
+		_flashes.append(_add_glow(column, glows[inner], FLASH_HEIGHT))
 	var width := keys * COLUMN_WIDTH
 	_add_line(Vector2.ZERO, Vector2(width, 0.0), Color.WHITE, 2.0) # skin.ini JudgementLine: 1
 	for x in [0.0, width]:
@@ -55,21 +66,42 @@ func set_pressed(column: int, down: bool) -> void:
 	key.texture = _key_down[column] if down else _key_up[column]
 	key.position.y = -HIT_POSITION + (PRESS_OFFSET if down else 0.0)
 	key.modulate = Color(1.25, 1.25, 1.25) if down else Color.WHITE
-	var light := _lights[column]
+	if down:
+		_lights[column].modulate.a = LIGHT_PRESS_ALPHA
+		_fade_light(column, _held_alpha(column), PRESS_FLASH_TIME)
+	else:
+		_fade_light(column, 0.0, RELEASE_TIME)
+
+
+## Brightens column's held light while it holds a hit hold note.
+func set_holding(column: int, holding: bool) -> void:
+	if _holding[column] == holding:
+		return
+	_holding[column] = holding
+	if _keys[column].texture == _key_down[column]:
+		_fade_light(column, _held_alpha(column), 0.1)
+
+
+## A soft glow up column's lane from the judgement line after a hit.
+func flash(column: int) -> void:
+	var glow := _flashes[column]
+	if _flash_fades[column]:
+		_flash_fades[column].kill()
+	glow.modulate.a = 1.0
+	_flash_fades[column] = glow.create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_flash_fades[column].tween_property(glow, "modulate:a", 0.0, 0.2)
+
+
+func _held_alpha(column: int) -> float:
+	return LIGHT_HOLD_ALPHA if _holding[column] else LIGHT_ALPHA
+
+
+func _fade_light(column: int, alpha: float, duration: float) -> void:
 	if _light_fades[column]:
 		_light_fades[column].kill()
-	if down:
-		light.modulate.a = LIGHT_ALPHA
-	else:
-		_light_fades[column] = light.create_tween()
-		_light_fades[column].tween_property(light, "modulate:a", 0.0, 0.12)
-
-
-## Lights column briefly after a hit.
-func flash(column: int) -> void:
-	var rect := _flashes[column]
-	rect.modulate.a = 1.0
-	rect.create_tween().tween_property(rect, "modulate:a", 0.0, 0.15)
+	var light := _lights[column]
+	_light_fades[column] = light.create_tween().set_trans(Tween.TRANS_QUINT).set_ease(Tween.EASE_OUT)
+	_light_fades[column].tween_property(light, "modulate:a", alpha, duration)
 
 
 ## Neptune has key-1 to key-4 (plus pressed -p versions) for its four 4K columns: outer
@@ -101,27 +133,17 @@ func _glow(color: Color) -> GradientTexture2D:
 	return glow
 
 
-## Drawn under the key, so the glow rises from the top of the receptor.
-func _add_light(column: int, glow: GradientTexture2D) -> void:
-	var light := Sprite2D.new()
-	light.texture = glow
-	light.centered = false
-	light.scale = Vector2(COLUMN_WIDTH / glow.width, LIGHT_HEIGHT / glow.height)
-	light.position = Vector2(column * COLUMN_WIDTH, -LIGHT_HEIGHT)
-	light.modulate.a = 0.0
-	add_child(light)
-	_lights.append(light)
-
-
-func _add_flash(column: int, color: Color) -> void:
-	var rect := ColorRect.new()
-	rect.color = Color(color, 0.7)
-	rect.modulate.a = 0.0
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.position = Vector2(column * COLUMN_WIDTH, -FLASH_HEIGHT)
-	rect.size = Vector2(COLUMN_WIDTH, FLASH_HEIGHT)
-	add_child(rect)
-	_flashes.append(rect)
+## A hidden glow height pixels tall in column, rising from the judgement line. Lights are
+## added before the key, so they rise from the top of the receptor; flashes after, over it.
+func _add_glow(column: int, glow: GradientTexture2D, height: float) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.texture = glow
+	sprite.centered = false
+	sprite.scale = Vector2(COLUMN_WIDTH / glow.width, height / glow.height)
+	sprite.position = Vector2(column * COLUMN_WIDTH, -height)
+	sprite.modulate.a = 0.0
+	add_child(sprite)
+	return sprite
 
 
 func _add_line(from: Vector2, to: Vector2, color: Color, width: float) -> void:
