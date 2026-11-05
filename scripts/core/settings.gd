@@ -10,7 +10,8 @@ const DEFAULTS := {
 	"dither": {"pixel_scale": 3, "matrix_size": 4, "palette": "neptune", "beat_pulse": true},
 	## osu!lazer-style scroll speed, 1 to 40; F3 and F4 change it in game.
 	"mania": {"scroll_speed": 20},
-	## The last map played, so mode select shows its art on the next launch too.
+	## The last map selected in song select, so mode select shows its art on the next
+	## launch too.
 	"history": {"last_map": ""},
 }
 

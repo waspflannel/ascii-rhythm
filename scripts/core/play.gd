@@ -83,7 +83,7 @@ func _ready() -> void:
     if beatmap == null or beatmap.hit_objects.is_empty():
         $UI/MissingMapLabel.show()
         return
-    _music.stream = _load_audio(beatmap.path.get_base_dir().path_join(beatmap.audio_filename))
+    _music.stream = beatmap.load_audio()
     if _music.stream == null or _music.stream.get_length() <= 0.0:
         $UI/AudioErrorLabel.show()
         return
@@ -253,21 +253,6 @@ func _map_paths(folder: String) -> Array[String]:
     for child in dir.get_directories():
         result.append_array(_map_paths(folder.path_join(child)))
     return result
-
-
-func _load_audio(path: String) -> AudioStream:
-    if not FileAccess.file_exists(path):
-        return null
-    match path.get_extension().to_lower():
-        "mp3":
-            var stream := AudioStreamMP3.new()
-            stream.data = FileAccess.get_file_as_bytes(path)
-            return stream
-        "ogg":
-            return AudioStreamOggVorbis.load_from_file(path)
-        "wav":
-            return AudioStreamWAV.load_from_file(path)
-    return null
 
 
 func _is_holding(view: HitObjectView) -> bool:

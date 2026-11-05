@@ -91,10 +91,6 @@ func _show_song_select(mode: int) -> void:
 func _show_play(path: String) -> void:
 	_change_screen(func() -> void:
 		GameState.map_path = path
-		# Song select or results themed the screens from this map's art just before.
-		GameState.map_art = MapTheme.art
-		Settings.set_value("history", "last_map", path)
-		Settings.save_settings()
 		var play := (MANIA if GameState.mode == Beatmap.MODE_MANIA else STANDARD).instantiate()
 		play.beatmap_path = path
 		# Back skips the results; the HUD's end-of-run fade dies with the play screen.

@@ -2,7 +2,8 @@ extends Control
 ## Two-stage song select for GameState.mode: a vertical list of map sets (one per
 ## beatmaps/ folder), then a horizontal carousel of the chosen set's difficulties.
 ## The focused map's background art fills the screen, dimmed, MapTheme tints the UI to
-## its colours, and a panel describes the focused set or difficulty. The root scene
+## its colours, its song plays from the preview point, and a panel describes the focused
+## set or difficulty. The focused map is remembered for mode select. The root scene
 ## handles screen changes.
 
 signal map_chosen(path: String)
@@ -18,6 +19,8 @@ const ROW_GAP := 8.0
 const DIM := Color(0.55, 0.55, 0.55)
 ## Seconds to cross-fade the background art.
 const ART_FADE := 0.35
+## Seconds to fade a song preview in.
+const PREVIEW_FADE := 0.6
 const LIST_HINT := "↑ ↓  select      ENTER  open      ESC  back"
 const CAROUSEL_HINT := "← →  select      ENTER  play      ESC  back"
 
@@ -31,6 +34,11 @@ var _slide: Tween
 var _art_fade: Tween
 ## The art rect shown on top; the other one fades out under it.
 var _art_front: TextureRect
+## The previewed song's file and start; difficulties sharing a song keep it playing.
+var _preview_file := ""
+var _preview_at := 0.0
+var _preview := AudioStreamPlayer.new()
+var _preview_fade: Tween
 
 @onready var _rows: VBoxContainer = $List/Rows
 @onready var _cards: HBoxContainer = $Carousel/Cards
@@ -40,6 +48,8 @@ func _ready() -> void:
 	$Back.pressed.connect(_back)
 	$ModeLabel.text = "MANIA" if GameState.mode == Beatmap.MODE_MANIA else "STANDARD"
 	_art_front = $ArtFront
+	add_child(_preview)
+	_preview.finished.connect(func() -> void: _preview.play(_preview_at))
 	# ponytail: parses every .osu on open; add the cached library index from DESIGN.md when folders get big.
 	_scan("res://beatmaps")
 	if _sets.is_empty():
@@ -145,7 +155,7 @@ func _select_set(i: int) -> void:
 	$List/SetInfo/Items/Artist.text = first.artist
 	$List/SetInfo/Items/Mapper.text = "mapped by %s" % first.creator
 	$List/SetInfo/Items/Count.text = "%d %s" % [maps.size(), "DIFFICULTY" if maps.size() == 1 else "DIFFICULTIES"]
-	_show_art(_load_art(first))
+	_show_map(first)
 
 
 ## Centers card i in the difficulty carousel and describes its difficulty.
@@ -155,7 +165,7 @@ func _select(i: int) -> void:
 	var map: Beatmap = _sets[_set_index][i]
 	$Carousel/DiffInfo/Items/Version.text = map.version
 	$Carousel/DiffInfo/Items/Stats.text = _difficulty_stats(map)
-	_show_art(_load_art(map))
+	_show_map(map)
 
 
 ## One line of difficulty settings, object count and length for the info panel.
@@ -169,6 +179,39 @@ func _difficulty_stats(map: Beatmap) -> String:
 	var seconds := int(end)
 	return "%s   HP %.1f   OD %.1f   ·   %d objects   ·   %d:%02d" % [
 		size_stat, map.hp_drain, map.overall_difficulty, map.hit_objects.size(), seconds / 60, seconds % 60]
+
+
+## Shows map's art, plays its song and remembers it as the last selected map.
+func _show_map(map: Beatmap) -> void:
+	var art := _load_art(map)
+	_show_art(art)
+	_play_preview(map)
+	GameState.map_art = art
+	Settings.set_value("history", "last_map", map.path)
+
+
+func _exit_tree() -> void:
+	Settings.save_settings()
+
+
+## Loops map's song from its preview point, fading in; maps without playable audio go quiet.
+func _play_preview(map: Beatmap) -> void:
+	var file := map.path.get_base_dir().path_join(map.audio_filename)
+	if file == _preview_file:
+		return
+	_preview_file = file
+	_preview_at = map.preview_time
+	if _preview_fade:
+		_preview_fade.kill()
+	_preview.stream = map.load_audio()
+	if _preview.stream == null:
+		_preview.stop()
+		return
+	_preview.volume_linear = 0.0
+	_preview.play(_preview_at)
+	var volume := clampf(float(Settings.get_value("audio", "volume")), 0.0, 1.0)
+	_preview_fade = create_tween()
+	_preview_fade.tween_property(_preview, "volume_linear", volume, PREVIEW_FADE)
 
 
 ## Cross-fades the backdrop to texture and blends the theme to its colours; maps without

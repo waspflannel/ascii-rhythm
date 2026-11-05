@@ -3,7 +3,8 @@ extends Node
 
 var mode := Beatmap.MODE_MANIA
 var map_path := ""
-## The last played map's background art, behind mode select; null before any play.
+## The last map selected in song select: its background art, behind mode select; null
+## before any.
 var map_art: Texture2D
 
 

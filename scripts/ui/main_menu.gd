@@ -1,6 +1,6 @@
 extends Control
-## Mode selection: Standard, Mania or Quit under the title, over the last played map's
-## dimmed art (or just the stars before any play) and themed from it. The root scene
+## Mode selection: Standard, Mania or Quit under the title, over the last selected map's
+## dimmed art (or just the stars before any) and themed from it. The root scene
 ## handles screen changes. Mouse hover and keyboard focus share one highlight: the
 ## button slides right and lights up.
 

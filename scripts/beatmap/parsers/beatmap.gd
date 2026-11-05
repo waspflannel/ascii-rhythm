@@ -23,6 +23,8 @@ var path := ""
 var audio_filename := ""
 ## Silence before the song starts, in seconds.
 var audio_lead_in := 0.0
+## Where song select's preview starts, in seconds (osu! writes -1 for none, read as 0).
+var preview_time := 0.0
 var mode := MODE_STANDARD
 var title := ""
 var artist := ""
@@ -154,6 +156,24 @@ func load_background() -> Texture2D:
 	return ImageTexture.create_from_image(image) if err == OK else null
 
 
+## The song (MP3, Ogg Vorbis or WAV), decoded at runtime like the background; null when
+## missing or another format.
+func load_audio() -> AudioStream:
+	var file := path.get_base_dir().path_join(audio_filename)
+	if audio_filename.is_empty() or not FileAccess.file_exists(file):
+		return null
+	match file.get_extension().to_lower():
+		"mp3":
+			var stream := AudioStreamMP3.new()
+			stream.data = FileAccess.get_file_as_bytes(file)
+			return stream
+		"ogg":
+			return AudioStreamOggVorbis.load_from_file(file)
+		"wav":
+			return AudioStreamWAV.load_from_file(file)
+	return null
+
+
 ## The uninherited timing point in effect at song time t: its time is where beats start.
 func beat_at(t: float) -> TimingPoint:
 	var beat: TimingPoint = null
@@ -169,6 +189,7 @@ func _set_field(key: String, value: String) -> void:
 	match key:
 		"AudioFilename": audio_filename = value
 		"AudioLeadIn": audio_lead_in = value.to_float() / 1000.0
+		"PreviewTime": preview_time = maxf(0.0, value.to_float() / 1000.0)
 		"Mode": mode = value.to_int()
 		"Title": title = value
 		"Artist": artist = value
