@@ -1,9 +1,10 @@
 extends Node
-## Themes the screens from a beatmap's background art. The art's dominant colour takes
-## over from Neptune's royal blue as the accent: Neptune's blue ramp (Palette.BLUES) moves
-## to the accent's hue in every project theme colour and in the dither palette, so panels,
-## borders, captions and the dithered art all take on the map's colours. Grey art, or
-## none, keeps Neptune's blue.
+## Themes the screens from a beatmap's background art, and loads the dither colour. The
+## art's dominant colour takes over from Neptune's royal blue as the accent: Neptune's blue
+## ramp (Palette.BLUES) moves to the accent's hue in every project theme colour, so panels,
+## borders and captions take on the map's colours. Grey art, or none, keeps Neptune's
+## blue. The dither follows the colour picked in Settings unless Follow map is on (see
+## apply_palette).
 
 ## Seconds to blend from one map's colours to the next.
 const BLEND := 0.35
@@ -26,8 +27,8 @@ var art: Texture2D
 ## The current accent (Palette.BLUE moved to the map's hue) and its light tint (SKY).
 var accent := Palette.BLUE
 var light := Palette.SKY
-## Moves the dither palette's blues too. main.gd turns it off during play so notes and
-## hit objects dither to the skin's own colours.
+## With Follow map on, lets the map's accent drive the dither. main.gd turns it off during
+## play so notes and hit objects dither to the skin's own colours.
 var theme_dither := true:
 	set(value):
 		theme_dither = value
@@ -73,36 +74,42 @@ func _track(owner: Object, property: String) -> void:
 
 func _apply(color: Color) -> void:
 	accent = color
-	light = _shift(Palette.SKY)
+	light = Palette.shift(Palette.SKY, accent)
 	# One theme change for the whole retint, not one per colour.
 	_theme.set_block_signals(true)
 	for slot: Array in _slots:
-		slot[0].set(slot[1], _shift(slot[2]))
+		slot[0].set(slot[1], Palette.shift(slot[2], accent))
 	_theme.set_block_signals(false)
 	_theme.emit_changed()
 	apply_palette()
 
 
-## A Neptune blue moved to the accent: its hue offset from BLUE and its brightness are
-## kept and its saturation scales with the accent's, so BLUE itself becomes the accent.
-func _shift(blue: Color) -> Color:
-	var hue := fposmod(blue.h - Palette.BLUE.h + accent.h, 1.0)
-	var saturation := clampf(blue.s * accent.s / Palette.BLUE.s, 0.0, 1.0)
-	return Color.from_hsv(hue, saturation, blue.v, blue.a)
+## The dither's colour. Settings dither/accent (Neptune's blue if unreadable), or with
+## Follow map on the map's accent while theme_dither is on and Neptune's blue in play.
+func dither_accent() -> Color:
+	if Settings.get_value("dither", "follow_map"):
+		return accent if theme_dither else Palette.BLUE
+	var hex := str(Settings.get_value("dither", "accent"))
+	return Color(Color.html(hex), 1.0) if Color.html_is_valid(hex) else Palette.BLUE
 
 
-## Loads Settings dither/palette into the shader, its blues moved to the accent while
-## theme_dither is on; an unknown name (such as "rgb") dithers each colour channel instead.
+## Loads the dither colour into the shader's tint, and in palette mode its palette
+## (Palette.dither_palette); other modes clear the palette. The colour picked in Settings
+## drives the dither (palette ramp and tint) on every screen, play included, and overrides
+## the map's accent. With Follow map on, the map art's accent drives it outside play and
+## Neptune's blue during play. Map art themes the UI chrome either way.
 func apply_palette() -> void:
-	var colors: Array = Palette.DITHER.get(str(Settings.get_value("dither", "palette")), [])
+	var color := dither_accent()
+	var colors: Array[Color] = []
+	if Settings.get_value("dither", "mode") == "palette":
+		colors = Palette.dither_palette(color, Settings.get_value("dither", "shades"), Settings.get_value("dither", "skin_colours"))
 	var packed := PackedVector3Array()
-	for color: Color in colors.slice(0, PALETTE_SLOTS):
-		if theme_dither and color in Palette.BLUES:
-			color = _shift(color)
-		packed.append(Vector3(color.r, color.g, color.b))
+	for entry in colors:
+		packed.append(Vector3(entry.r, entry.g, entry.b))
 	packed.resize(PALETTE_SLOTS)
 	DITHER.set_shader_parameter("palette", packed)
-	DITHER.set_shader_parameter("palette_size", mini(colors.size(), PALETTE_SLOTS))
+	DITHER.set_shader_parameter("palette_size", colors.size())
+	DITHER.set_shader_parameter("tint_color", color)
 
 
 func _accent_of(texture: Texture2D) -> Color:

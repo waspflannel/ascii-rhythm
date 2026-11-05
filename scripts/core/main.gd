@@ -25,7 +25,7 @@ var _fade: Tween
 
 
 func _ready() -> void:
-	# MapTheme loads the dither palette.
+	# MapTheme loads the dither colour and palette.
 	_apply_filter()
 	get_window().size_changed.connect(_apply_filter)
 	Settings.dither_changed.connect(_apply_filter)
@@ -35,17 +35,27 @@ func _ready() -> void:
 	_fade.tween_property(_dither, "shader_parameter/brightness", 1.0, 0.6)
 
 
-## Loads the Settings dither/filter into the shader. The dither works in window pixels, so
-## its cells grow with the window to keep the same look at 1280x720, 1920x1080 and
-## fullscreen.
+## Loads the Settings dither knobs into the shader, clamped to their ranges so a
+## hand-edited file can't break it (MapTheme loads the colour and palette). The dither works
+## in window pixels, so its cells grow with the window to keep the same look at 1280x720,
+## 1920x1080 and fullscreen.
 func _apply_filter() -> void:
-	var chosen := str(Settings.get_value("dither", "filter"))
-	var filter: Dictionary = Palette.FILTER_BASE.merged(Palette.FILTERS.get(chosen, {}), true)
 	var window := Vector2(get_window().size)
 	var scale_factor := minf(window.x / LAYOUT_SIZE.x, window.y / LAYOUT_SIZE.y)
-	filter["pixel_scale"] = maxf(1.0, roundf(filter["pixel_scale"] * scale_factor))
-	for parameter: String in filter:
-		_dither.set_shader_parameter(parameter, filter[parameter])
+	var cell := clampi(Settings.get_value("dither", "pixel_scale"), 1, 8)
+	var knobs := {
+		"quantize": Settings.get_value("dither", "mode") != "off",
+		"pattern": Settings.DITHER_PATTERNS.find(Settings.get_value("dither", "pattern")),
+		"strength": clampf(Settings.get_value("dither", "strength"), 0.0, 1.0),
+		"matrix_size": Settings.get_value("dither", "matrix_size"),
+		"pixel_scale": maxf(1.0, roundf(cell * scale_factor)),
+		"color_levels": clampi(Settings.get_value("dither", "color_levels"), 2, 16),
+		"scanlines": clampf(Settings.get_value("dither", "scanlines"), 0.0, 1.0),
+		"grain": clampf(Settings.get_value("dither", "grain"), 0.0, 0.2),
+		"tint": clampf(Settings.get_value("dither", "tint"), 0.0, 1.0),
+	}
+	for parameter: String in knobs:
+		_dither.set_shader_parameter(parameter, knobs[parameter])
 
 
 func _connect_menu(menu: Control) -> void:
@@ -71,8 +81,8 @@ func _change_screen(build: Callable) -> void:
 	_fade.tween_property(_dither, "shader_parameter/brightness", 1.0, FADE_IN)
 
 
-## Swaps in screen. Play screens keep Neptune's blues in the dither palette, so notes
-## and hit objects keep their skin colours.
+## Swaps in screen. With Follow map on, play screens keep Neptune's blue in the dither, so
+## notes and hit objects keep their skin colours (see MapTheme.apply_palette).
 func _replace_screen(screen: Control, playing := false) -> Control:
 	MapTheme.theme_dither = not playing
 	for child in _viewport.get_children():
