@@ -4,7 +4,7 @@
 
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/standard/hitcircles/cursor@2x.png" id="2_cursor"]
 [ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="3_hud"]
-[ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/star@2x.png" id="4_star"]
+[ext_resource type="PackedScene" path="res://scenes/pause.tscn" id="4_pause"]
 
 [node name="Play" type="Control"]
 layout_mode = 3
@@ -25,6 +25,7 @@ scale = Vector2(0.075, 0.075)
 texture_filter = 4
 
 [node name="Music" type="AudioStreamPlayer" parent="."]
+bus = &"Music"
 
 [node name="Hud" parent="." instance=ExtResource("3_hud")]
 
@@ -45,26 +46,6 @@ offset_right = 460.0
 offset_bottom = 92.0
 theme_type_variation = &"HintLabel"
 text = "Play"
-
-[node name="BackButton" type="Button" parent="UI"]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -132.0
-offset_top = -46.0
-offset_right = -14.0
-offset_bottom = -8.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_type_variation = &"BackButton"
-theme_override_font_sizes/font_size = 24
-text = "BACK"
-icon = ExtResource("4_star")
-icon_alignment = 2
-expand_icon = true
 
 [node name="Details" type="HBoxContainer" parent="UI"]
 visible = false
@@ -149,7 +130,7 @@ offset_right = 800.0
 offset_bottom = 124.0
 theme_type_variation = &"CaptionLabel"
 theme_override_font_sizes/font_size = 20
-text = "No matching .osu map found in beatmaps/ for this mode."
+text = "No matching .osu map found in beatmaps/ for this mode.   ESC  back"
 
 [node name="AudioErrorLabel" type="Label" parent="UI"]
 visible = false
@@ -160,7 +141,7 @@ offset_right = 800.0
 offset_bottom = 124.0
 theme_type_variation = &"CaptionLabel"
 theme_override_font_sizes/font_size = 20
-text = "Could not load the beatmap audio."
+text = "Could not load the beatmap audio.   ESC  back"
 
 [node name="CompleteLabel" type="Label" parent="UI"]
 visible = false
@@ -172,3 +153,5 @@ offset_bottom = 124.0
 theme_type_variation = &"CaptionLabel"
 theme_override_font_sizes/font_size = 20
 text = "Playback complete."
+
+[node name="Pause" parent="." instance=ExtResource("4_pause")]

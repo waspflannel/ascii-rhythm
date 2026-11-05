@@ -1,7 +1,9 @@
 extends Control
 ## Shared beatmap simulation: parse, play audio, spawn views, and route player input.
 
+## Quit in the pause menu, or Esc without a playable map.
 signal back_requested
+signal retry_requested
 ## The HUD emits this once the run is over: failed, or every object judged / the song ended.
 signal run_finished(score: RunScore)
 
@@ -38,6 +40,8 @@ var _next_object := 0
 var _preempt := 1.2
 var _lead_in := 2.0
 var _running := false
+## A map and its audio loaded, so Esc pauses instead of leaving.
+var _playable := false
 var _judgements: Array[int] = []
 var _completed := 0
 var _pressed: Dictionary = {}
@@ -58,8 +62,9 @@ var _hit_sound: AudioStreamPlayer
 
 
 func _ready() -> void:
-    $UI/BackButton.pressed.connect(back_requested.emit)
-    $UI/BackButton.focus_mode = Control.FOCUS_NONE
+    $Pause.resumed.connect(_release_keys.bind(false))
+    $Pause.retry_requested.connect(retry_requested.emit)
+    $Pause.quit_requested.connect(back_requested.emit)
     $UI/ModeLabel.text = mode_name
     _judgements.resize(HitObjectView.Judgement.size())
     resized.connect(_layout_playfield)
@@ -88,10 +93,10 @@ func _ready() -> void:
         $UI/AudioErrorLabel.show()
         return
     _map_value.text = "%s [%s]" % [beatmap.title, beatmap.version]
-    _music.volume_linear = clampf(float(Settings.get_value("audio", "volume")), 0.0, 1.0)
     _hit_sound = AudioStreamPlayer.new()
     _hit_sound.stream = _skin.hit_sound(beatmap.sample_set)
-    _hit_sound.volume_linear = _music.volume_linear * 0.5
+    _hit_sound.bus = &"SFX"
+    _hit_sound.volume_linear = 0.5
     # Built-in voice pool: rapid hits overlap instead of cutting each other off.
     _hit_sound.max_polyphony = 8
     add_child(_hit_sound)
@@ -107,6 +112,7 @@ func _ready() -> void:
         _set_scroll_speed(int(Settings.get_value("mania", "scroll_speed")))
     _lead_in = maxf(2.0, beatmap.audio_lead_in)
     _layout_playfield()
+    _playable = true
     _running = true
     _advance(-_lead_in)
 
@@ -262,6 +268,13 @@ func _is_holding(view: HitObjectView) -> bool:
 
 
 func _input(event: InputEvent) -> void:
+    if event.is_action_pressed("ui_cancel"):
+        get_viewport().set_input_as_handled()
+        if _playable:
+            $Pause.open()
+        else:
+            back_requested.emit()
+        return
     if not _running:
         return
     var code := 0
@@ -280,8 +293,6 @@ func _input(event: InputEvent) -> void:
             return
     elif event is InputEventMouseButton and beatmap.mode == Beatmap.MODE_STANDARD:
         if event.button_index not in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
-            return
-        if event.pressed and $UI/BackButton.get_global_rect().has_point(event.position):
             return
         code = -event.button_index
         down = event.pressed
@@ -321,12 +332,23 @@ func _input(event: InputEvent) -> void:
 
 
 func _notification(what: int) -> void:
-    if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _running:
-        _pressed.clear()
-        if _stage:
-            for column in _lane_keys.size():
-                _stage.set_pressed(column, false)
-        var t := -_lead_in if _lead_in > 0.0 else SongClock.get_time()
-        for view in _live:
-            view.holding = false
+    if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+        _release_keys(true)
+
+
+## Lets go of held keys and buttons whose release never reached _input: every one on
+## focus loss, or those let go while paused.
+func _release_keys(all: bool) -> void:
+    if not _running:
+        return
+    for code: int in _pressed.keys():
+        var held := Input.is_mouse_button_pressed(-code) if code < 0 else Input.is_physical_key_pressed(code)
+        if all or not held:
+            _pressed.erase(code)
+            if _stage:
+                _stage.set_pressed(_lane_keys.find(code), false)
+    var t := -_lead_in if _lead_in > 0.0 else SongClock.get_time()
+    for view in _live:
+        view.holding = _is_holding(view)
+        if not view.holding:
             view.release(t)

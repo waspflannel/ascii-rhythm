@@ -1,8 +1,9 @@
 extends Control
-## Root scene. Hosts the menu, song select, gameplay and results screens in a SubViewport
-## shown through the dither shader, and fades the dither between screens.
+## Root scene. Hosts the menu, settings, song select, gameplay and results screens in a
+## SubViewport shown through the dither shader, and fades the dither between screens.
 
 const MENU := preload("res://scenes/main_menu.tscn")
+const SETTINGS := preload("res://scenes/settings.tscn")
 const SONG_SELECT := preload("res://scenes/song_select.tscn")
 const MANIA := preload("res://scenes/mania.tscn")
 const STANDARD := preload("res://scenes/standard.tscn")
@@ -46,6 +47,7 @@ func _apply_pixel_scale() -> void:
 func _connect_menu(menu: Control) -> void:
 	menu.mania_selected.connect(_show_song_select.bind(Beatmap.MODE_MANIA), CONNECT_DEFERRED)
 	menu.standard_selected.connect(_show_song_select.bind(Beatmap.MODE_STANDARD), CONNECT_DEFERRED)
+	menu.settings_selected.connect(_show_settings, CONNECT_DEFERRED)
 
 
 ## Fades the current screen out, lets build swap in the next one, then fades it in.
@@ -80,6 +82,11 @@ func _show_menu() -> void:
 	_change_screen(func() -> void: _connect_menu(_replace_screen(MENU.instantiate())))
 
 
+func _show_settings() -> void:
+	_change_screen(func() -> void:
+		_replace_screen(SETTINGS.instantiate()).back_requested.connect(_show_menu, CONNECT_DEFERRED))
+
+
 func _show_song_select(mode: int) -> void:
 	_change_screen(func() -> void:
 		GameState.mode = mode
@@ -93,8 +100,10 @@ func _show_play(path: String) -> void:
 		GameState.map_path = path
 		var play := (MANIA if GameState.mode == Beatmap.MODE_MANIA else STANDARD).instantiate()
 		play.beatmap_path = path
-		# Back skips the results; the HUD's end-of-run fade dies with the play screen.
+		# Quitting from the pause menu skips the results; the HUD's end-of-run fade dies
+		# with the play screen.
 		play.back_requested.connect(_show_song_select.bind(GameState.mode), CONNECT_DEFERRED)
+		play.retry_requested.connect(_show_play.bind(path), CONNECT_DEFERRED)
 		play.run_finished.connect(_show_results, CONNECT_DEFERRED | CONNECT_ONE_SHOT)
 		_replace_screen(play, true))
 

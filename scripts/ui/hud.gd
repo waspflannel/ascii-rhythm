@@ -56,7 +56,7 @@ func _ready() -> void:
 
 
 func _start() -> void:
-	# Without a playable map, Play shows its own message and Back button.
+	# Without a playable map, Play shows its own message; Esc leaves.
 	if _play.beatmap == null or _music.stream == null or _music.stream.get_length() <= 0.0:
 		return
 	_score = RunScore.new(_play.beatmap)

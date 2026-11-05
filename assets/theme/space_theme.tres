@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=20 format=3]
+[gd_resource type="Theme" load_steps=24 format=3]
 
 [ext_resource type="FontVariation" path="res://assets/fonts/serif.tres" id="1_serif"]
 [ext_resource type="FontFile" path="res://assets/fonts/Michroma-Regular.ttf" id="2_wide"]
@@ -126,6 +126,23 @@ content_margin_top = 1.0
 content_margin_bottom = 1.0
 bg_color = Color(0.95, 0.96, 1, 0.18)
 
+[sub_resource type="StyleBoxFlat" id="Slider"]
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.95, 0.96, 1, 0.18)
+
+[sub_resource type="StyleBoxFlat" id="Slider_fill"]
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.278, 0.463, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="Slider_fill_focus"]
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.62, 0.71, 1, 1)
+
+[sub_resource type="StyleBoxEmpty" id="Empty"]
+
 [resource]
 default_font = ExtResource("3_mono")
 default_font_size = 16
@@ -169,6 +186,10 @@ CardButton/styles/pressed = SubResource("Card_hover")
 GlassPanel/base_type = &"PanelContainer"
 GlassPanel/styles/panel = SubResource("Glass")
 HSeparator/constants/separation = 12
+HSlider/styles/focus = SubResource("Empty")
+HSlider/styles/grabber_area = SubResource("Slider_fill")
+HSlider/styles/grabber_area_highlight = SubResource("Slider_fill_focus")
+HSlider/styles/slider = SubResource("Slider")
 HSeparator/styles/separator = SubResource("Separator")
 HeadingLabel/base_type = &"Label"
 HeadingLabel/colors/font_color = Color(0.95, 0.96, 1, 1)
