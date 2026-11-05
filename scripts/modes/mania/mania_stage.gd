@@ -75,6 +75,8 @@ func set_pressed(column: int, down: bool) -> void:
 
 ## Brightens column's held light while it holds a hit hold note.
 func set_holding(column: int, holding: bool) -> void:
+	if _holding[column] == holding:
+		return
 	_holding[column] = holding
 	if _keys[column].texture == _key_down[column]:
 		_fade_light(column, _held_alpha(column), 0.1)
