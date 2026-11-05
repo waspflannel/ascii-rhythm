@@ -1,11 +1,10 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/results.gd" id="1_results"]
 [ext_resource type="Script" path="res://scripts/ui/skin_number.gd" id="2_number"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/ranking-perfect@2x.png" id="3_perfect"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/ranking-retry@2x.png" id="4_retry"]
 [ext_resource type="Script" path="res://scripts/ui/space_backdrop.gd" id="5_backdrop"]
-[ext_resource type="PackedScene" path="res://scenes/ui/planet.tscn" id="6_planet"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/star@2x.png" id="7_star"]
 
 [node name="Results" type="Control"]
@@ -29,7 +28,7 @@ mouse_filter = 2
 script = ExtResource("5_backdrop")
 
 [node name="Art" type="TextureRect" parent="."]
-self_modulate = Color(0.3, 0.32, 0.42, 1)
+self_modulate = Color(0.33, 0.33, 0.33, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,21 +38,6 @@ grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
-
-[node name="Planet" parent="." instance=ExtResource("6_planet")]
-modulate = Color(0.75, 0.78, 0.9, 1)
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.76
-anchor_top = 0.46
-anchor_right = 0.76
-anchor_bottom = 0.46
-offset_left = -170.0
-offset_top = -170.0
-offset_right = 170.0
-offset_bottom = 170.0
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="Map" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -82,7 +66,7 @@ text_overrun_behavior = 3
 
 [node name="Artist" type="Label" parent="Map"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.62, 0.71, 1, 1)
+theme_type_variation = &"SubLabel"
 text = "Artist"
 text_overrun_behavior = 3
 

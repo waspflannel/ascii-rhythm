@@ -1,8 +1,9 @@
 extends Control
 ## Two-stage song select for GameState.mode: a vertical list of map sets (one per
 ## beatmaps/ folder), then a horizontal carousel of the chosen set's difficulties.
-## The focused map's background art fills the screen, dimmed, and a panel describes the
-## focused set or difficulty. The root scene handles screen changes.
+## The focused map's background art fills the screen, dimmed, MapTheme tints the UI to
+## its colours, and a panel describes the focused set or difficulty. The root scene
+## handles screen changes.
 
 signal map_chosen(path: String)
 signal back_requested
@@ -170,10 +171,12 @@ func _difficulty_stats(map: Beatmap) -> String:
 		size_stat, map.hp_drain, map.overall_difficulty, map.hit_objects.size(), seconds / 60, seconds % 60]
 
 
-## Cross-fades the backdrop to texture; maps without art fade out to the stars.
+## Cross-fades the backdrop to texture and blends the theme to its colours; maps without
+## art fade out to the stars and Neptune's blue.
 func _show_art(texture: Texture2D) -> void:
 	if _art_front.texture == texture and _art_front.modulate.a > 0.0:
 		return
+	MapTheme.retarget(texture)
 	if _art_fade:
 		_art_fade.kill()
 	var back := _art_front

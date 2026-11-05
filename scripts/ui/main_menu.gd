@@ -1,7 +1,8 @@
 extends Control
-## Mode selection: Standard, Mania or Quit under the title. The root scene handles screen
-## changes. Mouse hover and keyboard focus share one highlight: the button slides right
-## and lights up.
+## Mode selection: Standard, Mania or Quit under the title, over the last played map's
+## dimmed art (or just the stars before any play) and themed from it. The root scene
+## handles screen changes. Mouse hover and keyboard focus share one highlight: the
+## button slides right and lights up.
 
 signal mania_selected
 signal standard_selected
@@ -13,6 +14,8 @@ const SLIDE := 18.0
 
 
 func _ready() -> void:
+	$Art.texture = GameState.map_art
+	MapTheme.retarget(GameState.map_art)
 	$Content/Buttons/Standard/Button.pressed.connect(standard_selected.emit)
 	$Content/Buttons/Mania/Button.pressed.connect(mania_selected.emit)
 	$Content/Buttons/Quit/Button.pressed.connect(get_tree().quit)

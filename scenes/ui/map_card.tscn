@@ -6,7 +6,7 @@ clip_contents = true
 theme_type_variation = &"CardButton"
 
 [node name="Art" type="TextureRect" parent="."]
-modulate = Color(0.5, 0.52, 0.62, 1)
+modulate = Color(0.55, 0.55, 0.55, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -29,7 +29,7 @@ grow_vertical = 0
 mouse_filter = 2
 color = Color(0, 0, 0, 0.6)
 
-[node name="Accent" type="ColorRect" parent="."]
+[node name="Accent" type="Panel" parent="."]
 visible = false
 layout_mode = 1
 anchors_preset = 9
@@ -37,7 +37,7 @@ anchor_bottom = 1.0
 offset_right = 5.0
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.278, 0.463, 1, 1)
+theme_type_variation = &"CaptionBar"
 
 [node name="Info" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -64,7 +64,7 @@ text_overrun_behavior = 3
 
 [node name="Artist" type="Label" parent="Info"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.62, 0.71, 1, 1)
+theme_type_variation = &"SubLabel"
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
 text_overrun_behavior = 3

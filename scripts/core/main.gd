@@ -12,8 +12,6 @@ const FADE_OUT := 0.16
 const FADE_IN := 0.24
 ## The layout size every screen is authored at (project.godot viewport size).
 const LAYOUT_SIZE := Vector2(1280, 720)
-## The shader's palette array length.
-const PALETTE_SLOTS := 16
 
 ## True while the old screen fades out; screen requests in that window are dropped, so
 ## repeated keys can't open two screens. Clears one deferred step after the new screen is
@@ -26,26 +24,14 @@ var _fade: Tween
 
 
 func _ready() -> void:
-	_apply_palette()
+	# MapTheme loads the dither palette.
+	_dither.set_shader_parameter("matrix_size", Settings.get_value("dither", "matrix_size"))
 	_apply_pixel_scale()
 	get_window().size_changed.connect(_apply_pixel_scale)
 	_connect_menu($Screen/Viewport/MainMenu)
 	_dither.set_shader_parameter("brightness", 0.0)
 	_fade = create_tween()
 	_fade.tween_property(_dither, "shader_parameter/brightness", 1.0, 0.6)
-
-
-## Loads Settings dither/palette into the shader; an unknown name (such as "rgb") dithers
-## each colour channel instead.
-func _apply_palette() -> void:
-	var colors: Array = Palette.DITHER.get(str(Settings.get_value("dither", "palette")), [])
-	var packed := PackedVector3Array()
-	for color: Color in colors.slice(0, PALETTE_SLOTS):
-		packed.append(Vector3(color.r, color.g, color.b))
-	packed.resize(PALETTE_SLOTS)
-	_dither.set_shader_parameter("palette", packed)
-	_dither.set_shader_parameter("palette_size", mini(colors.size(), PALETTE_SLOTS))
-	_dither.set_shader_parameter("matrix_size", Settings.get_value("dither", "matrix_size"))
 
 
 ## The dither works in window pixels, so its cells grow with the window to keep the same
@@ -79,7 +65,10 @@ func _change_screen(build: Callable) -> void:
 	_fade.tween_property(_dither, "shader_parameter/brightness", 1.0, FADE_IN)
 
 
-func _replace_screen(screen: Control) -> Control:
+## Swaps in screen. Play screens keep Neptune's blues in the dither palette, so notes
+## and hit objects keep their skin colours.
+func _replace_screen(screen: Control, playing := false) -> Control:
+	MapTheme.theme_dither = not playing
 	for child in _viewport.get_children():
 		_viewport.remove_child(child)
 		child.queue_free()
@@ -102,12 +91,14 @@ func _show_song_select(mode: int) -> void:
 func _show_play(path: String) -> void:
 	_change_screen(func() -> void:
 		GameState.map_path = path
+		# Song select or results themed the screens from this map's art just before.
+		GameState.map_art = MapTheme.art
 		var play := (MANIA if GameState.mode == Beatmap.MODE_MANIA else STANDARD).instantiate()
 		play.beatmap_path = path
 		# Back skips the results; the HUD's end-of-run fade dies with the play screen.
 		play.back_requested.connect(_show_song_select.bind(GameState.mode), CONNECT_DEFERRED)
 		play.run_finished.connect(_show_results, CONNECT_DEFERRED | CONNECT_ONE_SHOT)
-		_replace_screen(play))
+		_replace_screen(play, true))
 
 
 func _show_results(score: RunScore) -> void:

@@ -61,6 +61,7 @@ func _start() -> void:
 		return
 	_score = RunScore.new(_play.beatmap)
 	$MapTitle.text = "%s [%s]" % [_play.beatmap.title, _play.beatmap.version]
+	_progress.color = MapTheme.accent
 	_refresh()
 	show()
 
