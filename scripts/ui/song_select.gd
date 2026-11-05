@@ -248,6 +248,9 @@ func _scan(folder: String) -> void:
 	var dir := DirAccess.open(folder)
 	if dir == null:
 		return
+	for file in dir.get_files():
+		if file.get_extension().to_lower() == "osz":
+			_unpack_osz(folder.path_join(file))
 	var diffs: Array[Beatmap] = []
 	for file in dir.get_files():
 		if file.get_extension().to_lower() != "osu":
@@ -260,6 +263,31 @@ func _scan(folder: String) -> void:
 		_sets.append(diffs)
 	for child in dir.get_directories():
 		_scan(folder.path_join(child))
+
+
+## Unpacks an .osz into a sibling folder named after it, unless that folder already has an .osu.
+## The .osz is left in place: it's the user's download, not ours to delete.
+func _unpack_osz(path: String) -> void:
+	var dest := path.get_basename()
+	if DirAccess.dir_exists_absolute(dest) and Array(DirAccess.get_files_at(dest)).any(
+			func(f: String) -> bool: return f.get_extension().to_lower() == "osu"):
+		return
+	var zip := ZIPReader.new()
+	if zip.open(path) != OK:
+		push_warning("Could not open %s" % path)
+		return
+	for entry in zip.get_files():
+		# Zip-slip guard: never write outside dest.
+		if entry.is_absolute_path() or ".." in entry.split("/"):
+			continue
+		var out := dest.path_join(entry)
+		DirAccess.make_dir_recursive_absolute(out.get_base_dir())
+		if entry.ends_with("/"):
+			continue
+		var f := FileAccess.open(out, FileAccess.WRITE)
+		if f != null:
+			f.store_buffer(zip.read_file(entry))
+	zip.close()
 
 
 func _load_art(map: Beatmap) -> Texture2D:
