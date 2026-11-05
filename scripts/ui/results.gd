@@ -1,7 +1,7 @@
 extends Control
 ## End-of-run results: map details, score, hit counts, accuracy, max combo and the
-## osu! grade in front of the planet, for a passed or failed run, over the map's dimmed
-## background art. The root scene handles screen changes.
+## osu! grade, for a passed or failed run, over the map's dimmed background art and
+## themed from it. The root scene handles screen changes.
 
 signal retry_requested
 signal back_requested
@@ -52,7 +52,7 @@ static func _trimmed(texture: Texture2D) -> Texture2D:
 
 
 func _light_retry() -> void:
-	$Retry.modulate = Palette.SKY if $Retry.has_focus() or $Retry.is_hovered() else Color.WHITE
+	$Retry.modulate = MapTheme.light if $Retry.has_focus() or $Retry.is_hovered() else Color.WHITE
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -72,6 +72,7 @@ func _show_map(map: Beatmap) -> void:
 		mode = "Mania %dK" % (map as ManiaBeatmap).key_count()
 	$Map/Version.text = "[%s]  %s" % [map.version, mode]
 	$Art.texture = map.load_background()
+	MapTheme.retarget($Art.texture)
 
 
 ## One row per judgement the mode gives: the skin's judgement image where Neptune has one,

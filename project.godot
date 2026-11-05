@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.4", "GL Compatibility")
 Settings="*res://scripts/core/settings.gd"
 GameState="*res://scripts/core/game_state.gd"
 SongClock="*res://scripts/core/song_clock.gd"
+MapTheme="*res://scripts/core/map_theme.gd"
 
 [display]
 

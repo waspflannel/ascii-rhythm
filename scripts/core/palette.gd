@@ -14,6 +14,9 @@ const WHITE := Color(0.95, 0.96, 1.0)
 ## Cool grey for hairlines and dim text; a warm grey dithers olive against the blues.
 const GREY := Color(0.36, 0.41, 0.6)
 const CRIMSON := Color(0.86, 0.16, 0.27)
+## Neptune's blue ramp. MapTheme moves these to a map's hue, in the UI theme and the
+## dither palette alike.
+const BLUES: Array[Color] = [DEEP, NAVY, INDIGO, BLUE, SKY]
 ## Neptune skin.ini Combo1 to Combo3, so standard hit objects keep their colours.
 const CYAN := Color(0.18, 0.99, 0.99)
 const MAGENTA := Color(0.99, 0.39, 0.99)
