@@ -69,6 +69,7 @@ func _ready() -> void:
     # Every mouse motion event reaches _input, so the cursor and hit tests use the latest
     # position instead of one merged per frame. Restored on exit for the menus.
     Input.use_accumulated_input = false
+    Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
     $Pause.resumed.connect(_release_keys.bind(false))
     $Pause.retry_requested.connect(retry_requested.emit)
     $Pause.quit_requested.connect(back_requested.emit)
@@ -257,6 +258,7 @@ func _on_music_finished() -> void:
 func _exit_tree() -> void:
     SongClock.stop()
     Input.use_accumulated_input = true
+    Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _map_paths(folder: String) -> Array[String]:
