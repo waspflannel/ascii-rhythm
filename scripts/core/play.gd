@@ -69,7 +69,9 @@ func _ready() -> void:
     # Every mouse motion event reaches _input, so the cursor and hit tests use the latest
     # position instead of one merged per frame. Restored on exit for the menus.
     Input.use_accumulated_input = false
+    _hide_os_cursor()
     $Pause.resumed.connect(_release_keys.bind(false))
+    $Pause.resumed.connect(_hide_os_cursor)
     $Pause.retry_requested.connect(retry_requested.emit)
     $Pause.quit_requested.connect(back_requested.emit)
     $UI/ModeLabel.text = mode_name
@@ -254,9 +256,15 @@ func _on_music_finished() -> void:
     $UI/CompleteLabel.show()
 
 
+## Only the in-game skin cursor shows during play; the pause menu brings the OS cursor back.
+func _hide_os_cursor() -> void:
+    Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+
+
 func _exit_tree() -> void:
     SongClock.stop()
     Input.use_accumulated_input = true
+    Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _map_paths(folder: String) -> Array[String]:
@@ -282,6 +290,7 @@ func _input(event: InputEvent) -> void:
     if event.is_action_pressed("ui_cancel"):
         get_viewport().set_input_as_handled()
         if _playable:
+            Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
             $Pause.open()
         else:
             back_requested.emit()
