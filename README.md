@@ -1,4 +1,4 @@
-# ASCII Rhythm (working title)
+# Rhythm
 
 An aesthetic osu!mania-style desktop rhythm game with simple graphics, ASCII art and skinned hit objects. Built with Godot 4 (GDScript). See [docs/DESIGN.md](docs/DESIGN.md).
 
@@ -23,7 +23,9 @@ From a terminal: `godot --path .` runs the game, `godot -e --path .` opens the e
 - `assets/theme/space_theme.tres`: the project theme (`gui/theme/custom`); screens pick styles by type variation (`TitleLabel`, `HeadingLabel`, `CaptionLabel`, `AccentLabel`, `SubLabel`, `HintLabel`, `WideLabel`, `HeroButton`, `BackButton`, `CardButton`, `GlassPanel`, `CaptionBar`)
 - `beatmaps/`: drop `.osz` files or map folders here (gitignored)
 
-Settings are saved to `user://settings.cfg` (on Windows, `%APPDATA%\Godot\app_userdata\ASCII Rhythm\`). The `[dither]` section holds the dither look (defaults in parentheses; hand-edited values of the wrong type, and unknown modes, patterns or matrix sizes, fall back to the default, and numbers are clamped):
+Note: the project was renamed from "ASCII Rhythm", so Godot now uses the `Rhythm` userdata folder; copy your old `settings.cfg` over to keep existing settings.
+
+Settings are saved to `user://settings.cfg` (on Windows, `%APPDATA%\Godot\app_userdata\Rhythm\`). The `[dither]` section holds the dither look (defaults in parentheses; hand-edited values of the wrong type, and unknown modes, patterns or matrix sizes, fall back to the default, and numbers are clamped):
 
 | Key | Meaning |
 | --- | --- |
@@ -68,7 +70,7 @@ Track shading is a generated approximation; this is not a complete osu! skin eng
 
 ## Screens
 
-**Mode select** shows ASCII RHYTHM over a drifting star field, or over the dimmed background of the last map selected in song select (remembered across launches); Standard, Mania and Quit sit on Neptune's menu panels and slide out when hovered or focused. Standard or Mania opens **song select**, which only shows unpacked `.osu` maps in `beatmaps/` for that mode (osu! `Mode: 3` for Mania, `Mode: 0` for Standard; others are skipped). First a vertical list of map sets, one per folder, showing title, artist and mapper: Up/Down, the mouse wheel or a click moves, Enter or a click opens the set. Then a horizontal carousel of that set's difficulties, easiest first, with the key count for Mania: Left/Right, the wheel or a click moves, Enter or a click plays. Esc or **Back** steps back from the carousel to the list (same set highlighted), then to mode select. Song select reopens on the last map played, and the focused map's song loops from its osu! preview point. The focused map's background art fills the screen behind the lists, dimmed and dithered, and the screen takes on its colours (see Map themes); a panel shows the set (title, artist, mapper, difficulty count) or the difficulty (version, key count or CS/AR, HP, OD, object count and length).
+**Mode select** shows RHYTHM over a drifting star field, or over the dimmed background of the last map selected in song select (remembered across launches); Standard, Mania and Quit sit on Neptune's menu panels and slide out when hovered or focused. Standard or Mania opens **song select**, which only shows unpacked `.osu` maps in `beatmaps/` for that mode (osu! `Mode: 3` for Mania, `Mode: 0` for Standard; others are skipped). First a vertical list of map sets, one per folder, showing title, artist and mapper: Up/Down, the mouse wheel or a click moves, Enter or a click opens the set. Then a horizontal carousel of that set's difficulties, easiest first, with the key count for Mania: Left/Right, the wheel or a click moves, Enter or a click plays. Esc or **Back** steps back from the carousel to the list (same set highlighted), then to mode select. Song select reopens on the last map played, and the focused map's song loops from its osu! preview point. The focused map's background art fills the screen behind the lists, dimmed and dithered, and the screen takes on its colours (see Map themes); a panel shows the set (title, artist, mapper, difficulty count) or the difficulty (version, key count or CS/AR, HP, OD, object count and length).
 
 **Gameplay** stays black with a small HUD (`scenes/hud.tscn`): Neptune HP bar, map title, score, accuracy and combo in the skin's score digits with serif captions, judgement popups, a thin song progress line and elapsed / total time. With `beat_pulse` on, the dither brightens slightly on each beat (from the map's uninherited timing points). `scripts/core/run_score.gd` turns judgements into osu!-like score (ScoreV1 for Standard, 1,000,000-normalised for Mania with MAX worth 320 and counted as 300 for accuracy), accuracy and HP. Misses drain HP and hits recover it, scaled by the map's HP drain. At zero HP the run fades out; once every object is judged or the song ends, the music fades for two seconds. Both go to the results screen.
 
