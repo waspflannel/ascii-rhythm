@@ -48,6 +48,7 @@ func _ready() -> void:
 	$Back.pressed.connect(_back)
 	$ModeLabel.text = "MANIA" if GameState.mode == Beatmap.MODE_MANIA else "STANDARD"
 	_art_front = $ArtFront
+	_preview.bus = &"Music"
 	add_child(_preview)
 	_preview.finished.connect(func() -> void: _preview.play(_preview_at))
 	# ponytail: parses every .osu on open; add the cached library index from DESIGN.md when folders get big.
@@ -209,9 +210,8 @@ func _play_preview(map: Beatmap) -> void:
 		return
 	_preview.volume_linear = 0.0
 	_preview.play(_preview_at)
-	var volume := clampf(float(Settings.get_value("audio", "volume")), 0.0, 1.0)
 	_preview_fade = create_tween()
-	_preview_fade.tween_property(_preview, "volume_linear", volume, PREVIEW_FADE)
+	_preview_fade.tween_property(_preview, "volume_linear", 1.0, PREVIEW_FADE)
 
 
 ## Cross-fades the backdrop to texture and blends the theme to its colours; maps without

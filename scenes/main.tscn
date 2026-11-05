@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/main.gd" id="1_main"]
 [ext_resource type="Material" path="res://shaders/dither_material.tres" id="2_dither"]
 [ext_resource type="PackedScene" path="res://scenes/main_menu.tscn" id="3_menu"]
+[ext_resource type="Script" path="res://scripts/ui/volume_overlay.gd" id="4_volume"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -31,3 +32,54 @@ size = Vector2i(1280, 720)
 render_target_update_mode = 4
 
 [node name="MainMenu" parent="Screen/Viewport" instance=ExtResource("3_menu")]
+
+[node name="Volume" type="PanelContainer" parent="."]
+texture_filter = 2
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -300.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 60.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"GlassPanel"
+script = ExtResource("4_volume")
+
+[node name="Row" type="HBoxContainer" parent="Volume"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="Caption" type="Label" parent="Volume/Row"]
+layout_mode = 2
+theme_type_variation = &"WideLabel"
+text = "VOLUME"
+vertical_alignment = 1
+
+[node name="Track" type="ColorRect" parent="Volume/Row"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+color = Color(0.95, 0.96, 1, 0.12)
+
+[node name="Fill" type="ColorRect" parent="Volume/Row/Track"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.278, 0.463, 1, 1)
+
+[node name="Value" type="Label" parent="Volume/Row"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1

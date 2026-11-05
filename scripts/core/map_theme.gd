@@ -31,7 +31,7 @@ var light := Palette.SKY
 var theme_dither := true:
 	set(value):
 		theme_dither = value
-		_apply_palette()
+		apply_palette()
 
 var _blend: Tween
 ## Accents by texture instance id, so refocusing a map skips resampling.
@@ -50,7 +50,7 @@ func _ready() -> void:
 			if box:
 				_track(box, "bg_color")
 				_track(box, "border_color")
-	_apply_palette()
+	apply_palette()
 
 
 ## Blends the theme to texture's colours, or back to Neptune's blue for null or grey art.
@@ -79,7 +79,7 @@ func _apply(color: Color) -> void:
 		slot[0].set(slot[1], _shift(slot[2]))
 	_theme.set_block_signals(false)
 	_theme.emit_changed()
-	_apply_palette()
+	apply_palette()
 
 
 ## A Neptune blue moved to the accent: its hue offset from BLUE and its brightness are
@@ -92,7 +92,7 @@ func _shift(blue: Color) -> Color:
 
 ## Loads Settings dither/palette into the shader, its blues moved to the accent while
 ## theme_dither is on; an unknown name (such as "rgb") dithers each colour channel instead.
-func _apply_palette() -> void:
+func apply_palette() -> void:
 	var colors: Array = Palette.DITHER.get(str(Settings.get_value("dither", "palette")), [])
 	var packed := PackedVector3Array()
 	for color: Color in colors.slice(0, PALETTE_SLOTS):
