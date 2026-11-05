@@ -23,6 +23,8 @@ var holding := false
 var simulated_cursor: Variant = null
 ## True once the object has given its last judgement.
 var finished := false
+## That last judgement, so play_exit can animate hits and misses differently.
+var last_judgement := Judgement.NONE
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -103,6 +105,7 @@ func _finish(judgement: Judgement) -> void:
 	if finished:
 		return
 	finished = true
+	last_judgement = judgement
 	judged.emit(judgement)
 
 
