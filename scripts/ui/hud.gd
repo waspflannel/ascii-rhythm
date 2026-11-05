@@ -29,6 +29,14 @@ const MANIA_POPUP_Y := 220.0 / 480.0
 const PULSE := 0.07
 ## The dither material main.tscn draws the screen with (one shared resource).
 const DITHER := preload("res://shaders/dither_material.tres")
+## Combo and score kick on a hit: scale, seconds. Combo milestones snap bigger and longer.
+const PUNCH := 1.2
+const PUNCH_TIME := 0.1
+const PUNCH_50 := 1.3
+const PUNCH_100 := 1.4
+const PUNCH_MILESTONE_TIME := 0.18
+## A broken combo dims to this alpha, then eases back.
+const COMBO_BREAK_ALPHA := 0.3
 
 var _score: RunScore
 ## Hit objects that have given their last judgement; the map is done when all have.
@@ -36,6 +44,8 @@ var _finished_objects := 0
 var _leaving := false
 var _mania_popup: Sprite2D
 var _beat_pulse := bool(Settings.get_value("dither", "beat_pulse"))
+var _combo_tween: Tween
+var _score_tween: Tween
 
 @onready var _play: Control = get_parent()
 @onready var _music: AudioStreamPlayer = _play.get_node("Music")
@@ -107,8 +117,10 @@ func _on_judged(judgement: HitObjectView.Judgement, view: HitObjectView) -> void
 	# Judgements still count while leaving after the song, so objects it cut off show as misses.
 	if _score == null or _score.failed:
 		return
+	var broken := judgement == HitObjectView.Judgement.MISS and _score.combo > 0
 	_score.add(judgement)
 	_refresh()
+	_kick(judgement, broken)
 	_show_popup(judgement, view)
 	if view.finished:
 		_finished_objects += 1
@@ -122,6 +134,38 @@ func _refresh() -> void:
 	_score_text.set_text("%08d" % _score.score)
 	_accuracy_text.set_text("%.2f%%" % (_score.accuracy * 100.0))
 	_combo_text.set_text("%dx" % _score.combo)
+
+
+## Punches the combo (and score) on a hit, harder on every 50th and 100th combo; a broken
+## combo dims and eases back instead. Misses never punch.
+func _kick(judgement: HitObjectView.Judgement, broken: bool) -> void:
+	if judgement == HitObjectView.Judgement.MISS:
+		if broken:
+			if _combo_tween:
+				_combo_tween.kill()
+			_combo_text.scale = Vector2.ONE
+			_combo_text.modulate.a = COMBO_BREAK_ALPHA
+			_combo_tween = _combo_text.create_tween().set_trans(Tween.TRANS_QUINT).set_ease(Tween.EASE_OUT)
+			_combo_tween.tween_property(_combo_text, "modulate:a", 1.0, 0.4)
+		return
+	var combo := _score.combo
+	var amount := PUNCH_100 if combo % 100 == 0 else PUNCH_50 if combo % 50 == 0 else PUNCH
+	var time := PUNCH_TIME if amount == PUNCH else PUNCH_MILESTONE_TIME
+	# Combo grows from its bottom-left corner, score from its top-right, like their anchors.
+	_combo_tween = _punch(_combo_text, _combo_tween, Vector2(0.0, 1.0), amount, time)
+	_score_tween = _punch(_score_text, _score_tween, Vector2(1.0, 0.0), PUNCH, PUNCH_TIME)
+
+
+## Snaps node to amount times its size around pivot (a fraction of its size), easing back.
+func _punch(node: Control, running: Tween, pivot: Vector2, amount: float, time: float) -> Tween:
+	if running:
+		running.kill()
+	node.modulate.a = 1.0
+	node.pivot_offset = node.size * pivot
+	node.scale = Vector2.ONE * amount
+	var tween := node.create_tween().set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "scale", Vector2.ONE, time)
+	return tween
 
 
 func _show_popup(judgement: HitObjectView.Judgement, view: HitObjectView) -> void:
@@ -157,8 +201,9 @@ func _show_popup(judgement: HitObjectView.Judgement, view: HitObjectView) -> voi
 	tween.tween_callback(popup.queue_free)
 
 
-## Hands the run to the results screen: a quiet fade-out on fail, or a short music
-## fade once every object is judged or the song ends.
+## Hands the run to the results screen: on fail, a red cut on the playfield then a quiet
+## fade-out; on a pass (every object judged or the song ended), a short music fade that
+## ends in a quick white-out into the results.
 func _leave(failed: bool) -> void:
 	if _leaving:
 		return
@@ -166,6 +211,15 @@ func _leave(failed: bool) -> void:
 	var duration := 1.5 if failed else 2.0
 	var tween := create_tween().set_parallel()
 	if failed:
+		_field.modulate = Color(2.0, 0.35, 0.35)
+		tween.tween_property(_field, "modulate", Color.WHITE, 0.25).set_trans(Tween.TRANS_QUINT).set_ease(Tween.EASE_OUT)
 		tween.tween_property(_play, "modulate:a", 0.0, duration)
 	tween.tween_property(_music, "volume_db", -40.0, duration)
+	if not failed:
+		var white := ColorRect.new()
+		white.color = Color(1.0, 1.0, 1.0, 0.0)
+		white.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		white.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(white)
+		tween.tween_property(white, "color:a", 0.9, 0.15).set_delay(duration - 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(_play.run_finished.emit.bind(_score))
