@@ -121,26 +121,6 @@ layout_mode = 2
 button_pressed = true
 text = "STANDARD"
 
-[node name="Stars" type="HBoxContainer" parent="Panel/Rows/Options"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="Caption" type="Label" parent="Panel/Rows/Options/Stars"]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-theme_type_variation = &"CaptionLabel"
-theme_override_font_sizes/font_size = 18
-text = "Star rating"
-
-[node name="Rating" type="SpinBox" parent="Panel/Rows/Options/Stars"]
-custom_minimum_size = Vector2(120, 0)
-layout_mode = 2
-min_value = 1.0
-max_value = 10.0
-step = 0.1
-value = 4.5
-suffix = "★"
-
 [node name="GenerateWrap" type="Control" parent="Panel/Rows/Options"]
 custom_minimum_size = Vector2(440, 62)
 layout_mode = 2
