@@ -1,5 +1,5 @@
 extends RefCounted
-## Maps a song for Mania with Mapperatorinator, a local AI mapper (see third_party/README.md),
+## Maps a song for Standard or Mania with Mapperatorinator, a local AI mapper (see third_party/README.md),
 ## run by tools/mapperatorinator_run.py in its own process so the game keeps going. start
 ## launches it; the caller polls OS.is_process_running and reads progress() meanwhile.
 
@@ -12,7 +12,8 @@ const GENERATOR := preload("res://scripts/beatmap/beatmap_generator.gd")
 
 
 ## Starts mapping song (a BeatmapGenerator.prepare_set result) with Hydra overrides plus
-## config_name ("v32-mini" or "v32"), named version. Returns {error, pid, out}: out is the
+## config_name ("v32-mini" or "v32"), named version. overrides.gamemode picks the mode
+## (Beatmap.MODE_STANDARD or MODE_MANIA). Returns {error, pid, out}: out is the
 ## .osu it will write, which only exists once the run has succeeded.
 static func start(song: Dictionary, version: String, overrides: Dictionary) -> Dictionary:
 	var dir := ProjectSettings.globalize_path(DIR)
@@ -21,10 +22,12 @@ static func start(song: Dictionary, version: String, overrides: Dictionary) -> D
 	for need: String in [dir.path_join("inference.py"), python, runner]:
 		if not FileAccess.file_exists(need):
 			return {error = "Mapperatorinator isn't set up (missing %s). See third_party/README.md." % need}
+	if overrides.get("gamemode") not in [Beatmap.MODE_STANDARD, Beatmap.MODE_MANIA]:
+		return {error = "Mapperatorinator needs gamemode %d or %d, not %s" % [Beatmap.MODE_STANDARD, Beatmap.MODE_MANIA, overrides.get("gamemode")]}
 	var settings := overrides.duplicate()
 	var config: String = settings.config_name
 	settings.erase("config_name")
-	settings.merge({gamemode = Beatmap.MODE_MANIA, title = song.title, artist = song.artist, version = version}, true)
+	settings.merge({title = song.title, artist = song.artist, version = version}, true)
 	var out := ProjectSettings.globalize_path(song.path.path_join(GENERATOR.osu_name(song, version)))
 	# A map left from an earlier run would read as this one's success.
 	DirAccess.remove_absolute(out)

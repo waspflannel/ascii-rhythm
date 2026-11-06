@@ -3,9 +3,8 @@
 ## Mapperatorinator
 
 [Mapperatorinator](https://github.com/OliBomby/Mapperatorinator) (MIT) is the local AI
-mapper the Editor uses for **Mania** maps. It's a git submodule here; the Editor runs it
-through `tools/mapperatorinator_run.py` with the Python in its own `.venv`. Standard maps
-still come from the built-in heuristic and need none of this.
+mapper the Editor uses for its **Mania** and **Standard** maps. It's a git submodule here;
+the Editor runs it through `tools/mapperatorinator_run.py` with the Python in its own `.venv`.
 
 ### Setup (Windows, NVIDIA GPU)
 
@@ -23,7 +22,7 @@ on the first Generate (into the Hugging Face cache in your user folder, not this
 that run is slower.
 
 If the Editor says Mapperatorinator isn't set up, the submodule, `.venv` or the runner is
-missing; it never falls back to the heuristic for Mania.
+missing; it never falls back to the heuristic generator.
 
 ### What stays out of git
 
@@ -33,9 +32,11 @@ Face cache. `.gdignore` keeps Godot from importing any of it.
 
 ### Settings
 
-The Editor's Mania settings panel maps onto Mapperatorinator's inference options: model
-(`v32-mini` is faster, `v32` fuller), star rating (`difficulty`), keys (`keycount`), style
-`year`, `descriptors` (comma separated, e.g. `style/clean`), `device`, `hp_drain_rate`,
-`overall_difficulty`, `hold_note_ratio`, `scroll_speed_ratio`, `temperature`, `top_p`,
-`cfg_scale` and `seed`. Empty fields keep the model's default. A run's log is
+The Editor picks one mode (`gamemode` 3 for Mania, 0 for Standard) and its settings panel
+maps onto Mapperatorinator's inference options. Both modes: model (`v32-mini` is faster,
+`v32` fuller), star rating (`difficulty`), style `year`, `descriptors` (comma separated,
+e.g. `style/clean`), `device`, `hp_drain_rate`, `overall_difficulty`, `temperature`,
+`top_p`, `cfg_scale` and `seed`. Mania adds keys (`keycount`), `hold_note_ratio` and
+`scroll_speed_ratio`; Standard adds `circle_size`, `approach_rate`, `slider_multiplier`
+and `slider_tick_rate`. Empty fields keep the model's default. A run's log is
 `mapperatorinator.log` in Godot's user data folder.

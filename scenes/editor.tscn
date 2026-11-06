@@ -111,15 +111,9 @@ theme_type_variation = &"CaptionLabel"
 theme_override_font_sizes/font_size = 18
 text = "Generate"
 
-[node name="Mania" type="CheckBox" parent="Panel/Rows/Options/Modes"]
+[node name="Mode" type="OptionButton" parent="Panel/Rows/Options/Modes"]
+custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
-button_pressed = true
-text = "MANIA"
-
-[node name="Standard" type="CheckBox" parent="Panel/Rows/Options/Modes"]
-layout_mode = 2
-button_pressed = true
-text = "STANDARD"
 
 [node name="GenerateWrap" type="Control" parent="Panel/Rows/Options"]
 custom_minimum_size = Vector2(440, 62)
