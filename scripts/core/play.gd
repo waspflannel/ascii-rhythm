@@ -28,8 +28,6 @@ const MANIA_KEYS := {
 const MANIA_EXTRA_KEYS := [KEY_A, KEY_S, KEY_D, KEY_F, KEY_SPACE, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON, KEY_APOSTROPHE, KEY_Q, KEY_W, KEY_E, KEY_R, KEY_U, KEY_I, KEY_O, KEY_P]
 ## osu!lazer scroll speed: notes take this many seconds / speed to fall to the judgement line.
 const MANIA_SCROLL_TIME := 11.485
-## Standard cursor size while a hit key or button is held.
-const CURSOR_HELD_SCALE := 1.2
 
 @export var mode_name := "Play"
 ## Leave empty to pick a local matching map (Normal is preferred for the demo).
@@ -60,9 +58,10 @@ var _hit_sound: AudioStreamPlayer
 @onready var _time_value: Label = $UI/Details/TimeValue
 @onready var _objects_value: Label = $UI/Stats/ObjectsValue
 @onready var _judgement_values: Array[Label] = [$UI/Stats/PerfectValue, $UI/Stats/GreatValue, $UI/Stats/GoodValue, $UI/Stats/MissValue]
-@onready var _cursor: Sprite2D = $Playfield/Cursor
-@onready var _cursor_scale := _cursor.scale
-var _cursor_tween: Tween
+@onready var _cursor: CursorView = $Cursor
+## Standard only: the layer above the dither filter that holds the cursor unless Settings
+## draws it dithered; null when the cursor stays under Play, in the dithered SubViewport.
+var _overlay: CanvasLayer
 
 
 func _ready() -> void:
@@ -70,6 +69,14 @@ func _ready() -> void:
     # position instead of one merged per frame. Restored on exit for the menus.
     Input.use_accumulated_input = false
     _hide_os_cursor()
+    if not Settings.get_value("cursor", "dithered"):
+        # The dither filter covers the whole SubViewport, so a crisp cursor lives in the
+        # root window's canvas instead, above it. Deferred: the root is not ours to edit
+        # mid-ready.
+        _overlay = CanvasLayer.new()
+        _overlay.layer = 100
+        get_tree().root.add_child.call_deferred(_overlay)
+        _cursor.reparent.call_deferred(_overlay, false)
     $Pause.resumed.connect(_release_keys.bind(false))
     $Pause.resumed.connect(_hide_os_cursor)
     $Pause.retry_requested.connect(retry_requested.emit)
@@ -144,7 +151,9 @@ func _advance(t: float) -> void:
         _spawn(beatmap.hit_objects[_next_object])
         _next_object += 1
     _cursor.visible = beatmap.mode == Beatmap.MODE_STANDARD
-    _cursor.position = _field.get_local_mouse_position()
+    # Viewport coordinates, not the scaled Playfield's, so Size means the same dithered or not;
+    # the overlay is in window coordinates and the SubViewport fills the window from its corner.
+    _cursor.position = get_viewport().get_mouse_position()
     for view in _live.duplicate():
         view.holding = _is_holding(view)
         if not view.finished:
@@ -262,6 +271,8 @@ func _hide_os_cursor() -> void:
 
 
 func _exit_tree() -> void:
+    if _overlay:
+        _overlay.queue_free()
     SongClock.stop()
     Input.use_accumulated_input = true
     Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -291,6 +302,8 @@ func _input(event: InputEvent) -> void:
         get_viewport().set_input_as_handled()
         if _playable:
             Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+            # The OS cursor takes over while paused; resuming shows this one again.
+            _cursor.hide()
             $Pause.open()
         else:
             back_requested.emit()
@@ -378,10 +391,6 @@ func _release_keys(all: bool) -> void:
             view.release(t)
 
 
-## Grows the standard cursor quickly while any hit key or button is down, easing back on release.
+## Grows the standard cursor while any hit key or button is down, easing back on release.
 func _update_cursor_hold() -> void:
-    if _cursor_tween:
-        _cursor_tween.kill()
-    var held := not _pressed.is_empty()
-    _cursor_tween = _cursor.create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-    _cursor_tween.tween_property(_cursor, "scale", _cursor_scale * (CURSOR_HELD_SCALE if held else 1.0), 0.05 if held else 0.15)
+    _cursor.set_held(not _pressed.is_empty())
