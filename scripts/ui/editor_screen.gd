@@ -1,9 +1,9 @@
 extends Control
-## Editor: open or drop a song (mp3, ogg or wav), pick Mania, Standard or both and a star
-## rating, and Generate writes maps of it into one set folder under beatmaps/: Mania by
-## Mapperatorinator, a local AI mapper, with the knobs on the Mania settings panel, and
-## Standard by the heuristic BeatmapGenerator. Over the last selected map's dimmed art
-## and themed from it. The root scene handles screen changes.
+## Editor: open or drop a song (mp3, ogg or wav), pick Mania, Standard or both, and
+## Generate writes maps of it into one set folder under beatmaps/: Mania by
+## Mapperatorinator, a local AI mapper, with difficulty and the other knobs on the Mania
+## settings panel, and Standard by the heuristic BeatmapGenerator. Over the last selected
+## map's dimmed art and themed from it. The root scene handles screen changes.
 
 signal back_requested
 
@@ -15,7 +15,7 @@ const AUDIO_EXTENSIONS := ["mp3", "ogg", "wav"]
 ## The Mania settings panel's rows, under group headings: each the Mapperatorinator
 ## (Hydra) key it sets, its label and either options (a dropdown, first is the default),
 ## spin [min, max, step, default] (a number box) or hint (a text field; empty leaves the
-## model's default). The star rating box above sets difficulty.
+## model's default).
 const MANIA_SETTINGS: Array[Dictionary] = [
 	{group = "Basics"},
 	{key = "config_name", label = "Model", options = ["v32-mini", "v32"]},
@@ -24,6 +24,7 @@ const MANIA_SETTINGS: Array[Dictionary] = [
 	{key = "descriptors", label = "Descriptors", hint = "e.g. style/clean, skillset/jumps"},
 	{key = "device", label = "Device", options = ["cuda", "cpu", "auto"]},
 	{group = "Difficulty numbers"},
+	{key = "difficulty", label = "Difficulty", spin = [0, 10, 0.1, 4.5]},
 	{key = "hp_drain_rate", label = "HP drain", spin = [0, 10, 0.1, 5]},
 	{key = "overall_difficulty", label = "OD", spin = [0, 10, 0.1, 8]},
 	{key = "hold_note_ratio", label = "Hold notes", spin = [0, 1, 0.05, 0.25]},
@@ -52,7 +53,6 @@ var _poll := 0.0
 @onready var _generate_button: Button = $Panel/Rows/Options/GenerateWrap/Generate
 @onready var _mania: CheckBox = $Panel/Rows/Options/Modes/Mania
 @onready var _standard: CheckBox = $Panel/Rows/Options/Modes/Standard
-@onready var _rating: SpinBox = $Panel/Rows/Options/Stars/Rating
 
 
 func _ready() -> void:
@@ -147,7 +147,8 @@ func _generate() -> void:
 		_status("Analysing…")
 		# Let the status paint before the analysis blocks the frame.
 		await get_tree().process_frame
-		var result := GENERATOR.generate(_file, false, true, _rating.value)
+		# Standard heuristic has no model knobs; Mania difficulty lives on the Mania panel.
+		var result := GENERATOR.generate(_file, false, true, 4.5)
 		if not result.error.is_empty():
 			# The same song would fail again, so it has to be chosen anew.
 			_status(result.error, true)
@@ -161,7 +162,7 @@ func _generate() -> void:
 		var song := GENERATOR.prepare_set(_file)
 		var run := {error = song.error}
 		if song.error.is_empty():
-			var version := "AI %.1f★ %dK" % [_rating.value, overrides.keycount]
+			var version := "AI %.1f★ %dK" % [overrides.difficulty, overrides.keycount]
 			run = MAPPER.start(song, version, overrides)
 		if run.error.is_empty():
 			_pid = run.pid
@@ -218,7 +219,7 @@ func _build_mania_settings() -> void:
 ## The Mania settings as Mapperatorinator overrides, or the error for a field that isn't
 ## a number. Whole-number boxes give ints, as its config wants for keys, year and seed.
 func _mania_overrides() -> Variant:
-	var overrides := {"difficulty": _rating.value}
+	var overrides := {}
 	for setting: Dictionary in MANIA_SETTINGS:
 		if not setting.has("key"):
 			continue
