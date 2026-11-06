@@ -46,7 +46,7 @@ Each mode plays its own map type. Mania maps (Mode: 3) play in Mania, and standa
 5. Fail screen
 6. Results
 7. Settings: keybinds, scroll speed (mania), audio offset, volume, cursor options (size, colour, outline, opacity, drawn crisp above the dither or dithered, grow on hold), dither options (colour picker, every dither knob, reset to default, beat pulse on/off), fullscreen or windowed
-8. Editor: open or drop an audio file, pick Mania / Standard / both and a star rating, generate heuristic beatmaps into beatmaps/ (onset detection on the decoded audio, no network)
+8. Editor: open or drop an audio file, pick Mania or Standard and its settings, and generate a beatmap into beatmaps/ with Mapperatorinator, a local AI mapper (see third_party/README.md)
 
 ## Milestones
 1. **Foundation:** Godot project, beatmaps folder scan, .osz/.osu parsing, song select, audio playback with a precise clock, dither post-process.

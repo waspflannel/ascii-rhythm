@@ -8,7 +8,7 @@ job: {
   "audio": the song (already copied into the set folder),
   "out": the .osu path to write,
   "log": where this run's output goes, which the Editor tails for progress,
-  "overrides": {hydra key: number | string | [strings]}
+  "overrides": {hydra key: number | string | [strings]}, with gamemode 0 (Standard) or 3 (Mania)
 }
 
 Hydra chokes on paths with spaces, so the song is copied to a space-free temp folder and
@@ -48,6 +48,9 @@ def main(job):
         # The .osu's AudioFilename is this file's name, so keep the set copy's name.
         shutil.copyfile(audio, work / audio.name)
         overrides = dict(job["overrides"])
+        # The mode decides which model runs, so never let it fall to Mapperatorinator's default.
+        if overrides.get("gamemode") not in (0, 3):
+            raise ValueError(f"job needs gamemode 0 (Standard) or 3 (Mania), got {overrides.get('gamemode')!r}")
         overrides.update(audio_path=(work / audio.name).as_posix(), output_path=work.as_posix())
         sys.argv = [str(mapper / "inference.py"), "--config-name", job["config_name"]]
         sys.argv += [f"{k}={hydra_value(v)}" for k, v in overrides.items()]

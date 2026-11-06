@@ -1,9 +1,9 @@
 extends Control
-## Editor: open or drop a song (mp3, ogg or wav), pick Mania, Standard or both, and
-## Generate writes maps of it into one set folder under beatmaps/: Mania by
-## Mapperatorinator, a local AI mapper, with difficulty and the other knobs on the Mania
-## settings panel, and Standard by the heuristic BeatmapGenerator. Over the last selected
-## map's dimmed art and themed from it. The root scene handles screen changes.
+## Editor: open or drop a song (mp3, ogg or wav), pick Mania or Standard, and Generate has
+## Mapperatorinator, a local AI mapper, write a map of it for that mode into the song's set
+## folder under beatmaps/, with difficulty and the other knobs on the settings panel. Over
+## the last selected map's dimmed art and themed from it. The root scene handles screen
+## changes.
 
 signal back_requested
 
@@ -12,23 +12,29 @@ const GENERATOR := preload("res://scripts/beatmap/beatmap_generator.gd")
 const MAPPER := preload("res://scripts/beatmap/mapperatorinator.gd")
 ## The formats Beatmap.load_audio_file decodes.
 const AUDIO_EXTENSIONS := ["mp3", "ogg", "wav"]
-## The Mania settings panel's rows, under group headings: each the Mapperatorinator
-## (Hydra) key it sets, its label and either options (a dropdown, first is the default),
-## spin [min, max, step, default] (a number box) or hint (a text field; empty leaves the
-## model's default).
-const MANIA_SETTINGS: Array[Dictionary] = [
+## The modes the picker offers, as names by gamemode; the first is the default.
+const MODES := {Beatmap.MODE_MANIA: "Mania", Beatmap.MODE_STANDARD: "Standard"}
+## The settings panel's rows, under group headings: each the Mapperatorinator (Hydra) key
+## it sets, its label and either options (a dropdown, first is the default), spin [min,
+## max, step, default] (a number box) or hint (a text field; empty leaves the model's
+## default). A row with a mode shows and applies only for that gamemode; the rest are shared.
+const SETTINGS: Array[Dictionary] = [
 	{group = "Basics"},
 	{key = "config_name", label = "Model", options = ["v32-mini", "v32"]},
-	{key = "keycount", label = "Keys", spin = [1, 10, 1, 4]},
+	{key = "keycount", label = "Keys", spin = [1, 10, 1, 4], mode = Beatmap.MODE_MANIA},
 	{key = "year", label = "Style year", spin = [2007, 2023, 1, 2023]},
 	{key = "descriptors", label = "Descriptors", hint = "e.g. style/clean, skillset/jumps"},
 	{key = "device", label = "Device", options = ["cuda", "cpu", "auto"]},
 	{group = "Difficulty numbers"},
 	{key = "difficulty", label = "Difficulty", spin = [0, 10, 0.1, 4.5]},
 	{key = "hp_drain_rate", label = "HP drain", spin = [0, 10, 0.1, 5]},
+	{key = "circle_size", label = "CS", spin = [0, 10, 0.1, 4], mode = Beatmap.MODE_STANDARD},
 	{key = "overall_difficulty", label = "OD", spin = [0, 10, 0.1, 8]},
-	{key = "hold_note_ratio", label = "Hold notes", spin = [0, 1, 0.05, 0.25]},
-	{key = "scroll_speed_ratio", label = "Scroll speed changes", hint = "0–1, empty = model's"},
+	{key = "approach_rate", label = "AR", spin = [0, 10, 0.1, 9], mode = Beatmap.MODE_STANDARD},
+	{key = "slider_multiplier", label = "Slider velocity", hint = "empty = model's", mode = Beatmap.MODE_STANDARD},
+	{key = "slider_tick_rate", label = "Slider tick rate", hint = "empty = model's", mode = Beatmap.MODE_STANDARD},
+	{key = "hold_note_ratio", label = "Hold notes", spin = [0, 1, 0.05, 0.25], mode = Beatmap.MODE_MANIA},
+	{key = "scroll_speed_ratio", label = "Scroll speed changes", hint = "0–1, empty = model's", mode = Beatmap.MODE_MANIA},
 	{group = "Generation"},
 	{key = "temperature", label = "Temperature", spin = [0, 2, 0.05, 0.9]},
 	{key = "top_p", label = "Top P", spin = [0, 1, 0.05, 0.9]},
@@ -40,19 +46,18 @@ const POLL := 0.5
 
 ## The chosen song's path, empty before one is chosen.
 var _file := ""
-## Each Mania setting's control, by key.
-var _mania_controls := {}
-## The running Mapperatorinator's pid (0 when none), the .osu it writes, the maps already
-## written this Generate, and the time to the next progress read.
+## Each setting's control by key, and each mode-only setting's row, shown with its mode.
+var _controls := {}
+var _mode_rows := {}
+## The running Mapperatorinator's pid (0 when none), the .osu it writes, and the time to
+## the next progress read.
 var _pid := 0
 var _out := ""
-var _written: Array[String] = []
 var _poll := 0.0
 
 @onready var _open: Button = $Panel/Rows/OpenWrap/Open
 @onready var _generate_button: Button = $Panel/Rows/Options/GenerateWrap/Generate
-@onready var _mania: CheckBox = $Panel/Rows/Options/Modes/Mania
-@onready var _standard: CheckBox = $Panel/Rows/Options/Modes/Standard
+@onready var _mode: OptionButton = $Panel/Rows/Options/Modes/Mode
 
 
 func _ready() -> void:
@@ -64,10 +69,12 @@ func _ready() -> void:
 	_open.pressed.connect($Picker.popup_centered)
 	$Picker.file_selected.connect(_set_file)
 	get_window().files_dropped.connect(_on_dropped)
-	_mania.toggled.connect(_refresh.unbind(1))
-	_standard.toggled.connect(_refresh.unbind(1))
+	for gamemode: int in MODES:
+		_mode.add_item(MODES[gamemode], gamemode)
+	_mode.item_selected.connect(_refresh.unbind(1))
 	_generate_button.pressed.connect(_generate)
-	_build_mania_settings()
+	_build_settings()
+	_refresh()
 	_open.grab_focus()
 
 
@@ -96,8 +103,7 @@ func _process(delta: float) -> void:
 		return
 	_pid = 0
 	if FileAccess.file_exists(_out):
-		_written.append(_out)
-		_status("Wrote %d map(s) to beatmaps/%s" % [_written.size(), _out.get_base_dir().get_file()])
+		_status("Wrote %s to beatmaps/%s" % [_out.get_file(), _out.get_base_dir().get_file()])
 	else:
 		_status("Mapperatorinator failed: %s" % MAPPER.progress(), true)
 	_refresh()
@@ -121,13 +127,20 @@ func _set_file(path: String) -> void:
 	_refresh()
 
 
-## Generate needs a song and at least one mode, and turns into Cancel while Mapperatorinator
-## runs. HeroButton has no disabled look, so dim it. The Mania settings show with Mania.
+## Generate needs a song, and turns into Cancel while Mapperatorinator runs. HeroButton has
+## no disabled look, so dim it. The settings panel shows with a song, with the picked
+## mode's rows; the mode holds still while a run is going.
 func _refresh() -> void:
 	_generate_button.text = "Cancel" if _pid else "Generate"
-	_generate_button.disabled = not _pid and (_file.is_empty() or not (_mania.button_pressed or _standard.button_pressed))
+	_generate_button.disabled = not _pid and _file.is_empty()
 	_generate_button.modulate.a = 0.45 if _generate_button.disabled else 1.0
-	$ManiaPanel.visible = not _file.is_empty() and _mania.button_pressed
+	_mode.disabled = _pid != 0
+	var gamemode := _mode.get_selected_id()
+	$ManiaPanel.visible = not _file.is_empty()
+	$ManiaPanel/Rows/Title.text = "%s settings · Mapperatorinator" % MODES[gamemode]
+	for setting: Dictionary in SETTINGS:
+		if _mode_rows.has(setting.get("key")):
+			_mode_rows[setting.key].visible = setting.mode == gamemode
 
 
 func _generate() -> void:
@@ -137,47 +150,31 @@ func _generate() -> void:
 		_status("Cancelled")
 		_refresh()
 		return
-	var overrides: Variant = _mania_overrides() if _mania.button_pressed else {}
+	var overrides: Variant = _overrides()
 	if overrides is String:
 		_status(overrides, true)
 		return
-	_written.clear()
-	_generate_button.disabled = true
-	if _standard.button_pressed:
-		_status("Analysing…")
-		# Let the status paint before the analysis blocks the frame.
-		await get_tree().process_frame
-		# Standard heuristic has no model knobs; Mania difficulty lives on the Mania panel.
-		var result := GENERATOR.generate(_file, false, true, 4.5)
-		if not result.error.is_empty():
-			# The same song would fail again, so it has to be chosen anew.
-			_status(result.error, true)
-			_file = ""
-			$Panel/Rows/File.text = ""
-			_refresh()
-			return
-		_written.assign(result.paths)
-		_status("Wrote %d map(s) to beatmaps/%s" % [_written.size(), result.folder])
-	if _mania.button_pressed:
-		var song := GENERATOR.prepare_set(_file)
-		var run := {error = song.error}
-		if song.error.is_empty():
-			var version := "AI %.1f★ %dK" % [overrides.difficulty, overrides.keycount]
-			run = MAPPER.start(song, version, overrides)
-		if run.error.is_empty():
-			_pid = run.pid
-			_out = run.out
-			_poll = 0.0
-			_status("Mapperatorinator: starting…")
-		else:
-			_status(run.error, true)
+	var song := GENERATOR.prepare_set(_file)
+	var run := {error = song.error}
+	if song.error.is_empty():
+		var version := "AI %.1f★" % overrides.difficulty
+		if overrides.gamemode == Beatmap.MODE_MANIA:
+			version += " %dK" % overrides.keycount
+		run = MAPPER.start(song, version, overrides)
+	if run.error.is_empty():
+		_pid = run.pid
+		_out = run.out
+		_poll = 0.0
+		_status("Mapperatorinator: starting…")
+	else:
+		_status(run.error, true)
 	_refresh()
 
 
-## Fills the Mania settings panel from MANIA_SETTINGS, in the Editor's caption style.
-func _build_mania_settings() -> void:
+## Fills the settings panel from SETTINGS, in the Editor's caption style.
+func _build_settings() -> void:
 	var rows: VBoxContainer = $ManiaPanel/Rows/Scroll/Settings
-	for setting: Dictionary in MANIA_SETTINGS:
+	for setting: Dictionary in SETTINGS:
 		if setting.has("group"):
 			var heading := Label.new()
 			heading.theme_type_variation = &"AccentLabel"
@@ -213,17 +210,21 @@ func _build_mania_settings() -> void:
 		row.add_child(caption)
 		row.add_child(control)
 		rows.add_child(row)
-		_mania_controls[setting.key] = control
+		_controls[setting.key] = control
+		if setting.has("mode"):
+			_mode_rows[setting.key] = row
 
 
-## The Mania settings as Mapperatorinator overrides, or the error for a field that isn't
-## a number. Whole-number boxes give ints, as its config wants for keys, year and seed.
-func _mania_overrides() -> Variant:
-	var overrides := {}
-	for setting: Dictionary in MANIA_SETTINGS:
-		if not setting.has("key"):
+## The picked mode and its settings as Mapperatorinator overrides, or the error for a field
+## that isn't a number. Whole-number boxes give ints, as its config wants for keys, year
+## and seed.
+func _overrides() -> Variant:
+	var gamemode := _mode.get_selected_id()
+	var overrides := {gamemode = gamemode}
+	for setting: Dictionary in SETTINGS:
+		if not setting.has("key") or setting.get("mode", gamemode) != gamemode:
 			continue
-		var control: Control = _mania_controls[setting.key]
+		var control: Control = _controls[setting.key]
 		if control is OptionButton:
 			var pick := control as OptionButton
 			overrides[setting.key] = pick.get_item_text(pick.selected)
