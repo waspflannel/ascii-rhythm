@@ -1,0 +1,203 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/editor_screen.gd" id="1_editor"]
+[ext_resource type="Script" path="res://scripts/ui/space_backdrop.gd" id="2_backdrop"]
+[ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/star@2x.png" id="3_star"]
+
+[node name="Editor" type="Control"]
+texture_filter = 2
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_editor")
+
+[node name="Backdrop" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_backdrop")
+
+[node name="Art" type="TextureRect" parent="."]
+self_modulate = Color(0.3, 0.3, 0.3, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Header" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 34.0
+offset_right = 720.0
+offset_bottom = 110.0
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Accent" type="Label" parent="Header"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+theme_override_font_sizes/font_size = 14
+text = "エディタ   ／   EDITOR"
+
+[node name="Title" type="Label" parent="Header"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 36
+text = "Editor"
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 48.0
+offset_top = 124.0
+offset_right = 720.0
+offset_bottom = 160.0
+mouse_filter = 2
+theme_type_variation = &"GlassPanel"
+
+[node name="Rows" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="Drop" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "Drop an audio file anywhere on the window, or"
+
+[node name="OpenWrap" type="Control" parent="Panel/Rows"]
+custom_minimum_size = Vector2(440, 62)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Open" type="Button" parent="Panel/Rows/OpenWrap"]
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 62.0
+theme_type_variation = &"HeroButton"
+text = "Open file…"
+alignment = 0
+
+[node name="File" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_type_variation = &"SubLabel"
+text_overrun_behavior = 3
+
+[node name="Options" type="VBoxContainer" parent="Panel/Rows"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="Modes" type="HBoxContainer" parent="Panel/Rows/Options"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Caption" type="Label" parent="Panel/Rows/Options/Modes"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 18
+text = "Generate"
+
+[node name="Mania" type="CheckBox" parent="Panel/Rows/Options/Modes"]
+layout_mode = 2
+button_pressed = true
+text = "MANIA"
+
+[node name="Standard" type="CheckBox" parent="Panel/Rows/Options/Modes"]
+layout_mode = 2
+button_pressed = true
+text = "STANDARD"
+
+[node name="Stars" type="HBoxContainer" parent="Panel/Rows/Options"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Caption" type="Label" parent="Panel/Rows/Options/Stars"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+theme_override_font_sizes/font_size = 18
+text = "Star rating"
+
+[node name="Rating" type="SpinBox" parent="Panel/Rows/Options/Stars"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+min_value = 1.0
+max_value = 10.0
+step = 0.1
+value = 6.0
+suffix = "★"
+
+[node name="GenerateWrap" type="Control" parent="Panel/Rows/Options"]
+custom_minimum_size = Vector2(440, 62)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Generate" type="Button" parent="Panel/Rows/Options/GenerateWrap"]
+modulate = Color(1, 1, 1, 0.45)
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 62.0
+disabled = true
+theme_type_variation = &"HeroButton"
+text = "Generate"
+alignment = 0
+
+[node name="Status" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_type_variation = &"SubLabel"
+autowrap_mode = 3
+
+[node name="Hint" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -560.0
+offset_top = -40.0
+offset_right = -40.0
+offset_bottom = -18.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"HintLabel"
+text = "ENTER  confirm      ESC  back"
+horizontal_alignment = 2
+
+[node name="Back" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -60.0
+offset_right = 192.0
+offset_bottom = -8.0
+grow_vertical = 0
+theme_type_variation = &"BackButton"
+text = "BACK"
+icon = ExtResource("3_star")
+icon_alignment = 2
+expand_icon = true
+
+[node name="Picker" type="FileDialog" parent="."]
+title = "Open audio"
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.mp3, *.ogg, *.wav ; Audio")
+use_native_dialog = true

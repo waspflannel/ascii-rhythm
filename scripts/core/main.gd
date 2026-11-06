@@ -1,9 +1,10 @@
 extends Control
-## Root scene. Hosts the menu, settings, song select, gameplay and results screens in a
-## SubViewport shown through the dither shader, and fades the dither between screens.
+## Root scene. Hosts the menu, settings, editor, song select, gameplay and results screens
+## in a SubViewport shown through the dither shader, and fades the dither between screens.
 
 const MENU := preload("res://scenes/main_menu.tscn")
 const SETTINGS := preload("res://scenes/settings.tscn")
+const EDITOR := preload("res://scenes/editor.tscn")
 const SONG_SELECT := preload("res://scenes/song_select.tscn")
 const MANIA := preload("res://scenes/mania.tscn")
 const STANDARD := preload("res://scenes/standard.tscn")
@@ -61,6 +62,7 @@ func _apply_filter() -> void:
 func _connect_menu(menu: Control) -> void:
 	menu.mania_selected.connect(_show_song_select.bind(Beatmap.MODE_MANIA), CONNECT_DEFERRED)
 	menu.standard_selected.connect(_show_song_select.bind(Beatmap.MODE_STANDARD), CONNECT_DEFERRED)
+	menu.editor_selected.connect(_show_editor, CONNECT_DEFERRED)
 	menu.settings_selected.connect(_show_settings, CONNECT_DEFERRED)
 
 
@@ -99,6 +101,11 @@ func _show_menu() -> void:
 func _show_settings() -> void:
 	_change_screen(func() -> void:
 		_replace_screen(SETTINGS.instantiate()).back_requested.connect(_show_menu, CONNECT_DEFERRED))
+
+
+func _show_editor() -> void:
+	_change_screen(func() -> void:
+		_replace_screen(EDITOR.instantiate()).back_requested.connect(_show_menu, CONNECT_DEFERRED))
 
 
 func _show_song_select(mode: int) -> void:

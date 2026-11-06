@@ -162,6 +162,12 @@ func load_audio() -> AudioStream:
 	var file := path.get_base_dir().path_join(audio_filename)
 	if audio_filename.is_empty() or not FileAccess.file_exists(file):
 		return null
+	return load_audio_file(file)
+
+
+## Decodes an MP3, Ogg Vorbis or WAV file by its extension; null for another format. The
+## editor's generator decodes its source song with this too.
+static func load_audio_file(file: String) -> AudioStream:
 	match file.get_extension().to_lower():
 		"mp3":
 			var stream := AudioStreamMP3.new()
