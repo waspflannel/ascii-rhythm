@@ -45,7 +45,7 @@ Each mode plays its own map type. Mania maps (Mode: 3) play in Mania, and standa
 4. Pause (resume, retry, quit)
 5. Fail screen
 6. Results
-7. Settings: keybinds, scroll speed (mania), audio offset, volume, dither options (colour picker, every dither knob, reset to default, beat pulse on/off), fullscreen or windowed
+7. Settings: keybinds, scroll speed (mania), audio offset, volume, cursor options (size, colour, outline, opacity, drawn crisp above the dither or dithered, grow on hold), dither options (colour picker, every dither knob, reset to default, beat pulse on/off), fullscreen or windowed
 8. Editor: open or drop an audio file, pick Mania / Standard / both and a star rating, generate heuristic beatmaps into beatmaps/ (onset detection on the decoded audio, no network)
 
 ## Milestones

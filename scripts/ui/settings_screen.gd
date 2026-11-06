@@ -1,9 +1,10 @@
 extends Control
-## Settings: volumes, audio offset, mania scroll speed and the dither look, over the last
-## selected map's dimmed art and themed from it. Every change applies and saves straight
-## away; scroll speed and beat pulse take effect from the next play. The Colour and Dither
-## rows open a popover beside the panel with the colour picker or the dither knobs. The
-## root scene handles screen changes.
+## Settings: volumes, audio offset, mania scroll speed, the cursor and the dither look, over
+## the last selected map's dimmed art and themed from it. Every change applies and saves
+## straight away; scroll speed, beat pulse and the cursor's layering and expand take effect
+## from the next play. The Cursor, Colour and Dither rows open a popover beside the panel
+## with the cursor knobs, the colour picker or the dither knobs. The root scene handles
+## screen changes.
 
 signal back_requested
 
@@ -39,11 +40,17 @@ func _ready() -> void:
 	_slider("Audio offset", "audio", "offset_ms", -500, 500, 1.0, "%+d ms")
 	_section("MANIA")
 	_slider("Scroll speed", "mania", "scroll_speed", 1, 40, 1.0, "%d")
+	_section("CURSOR")
+	var cursor := Button.new()
+	_row("Cursor", cursor)
+	var summary := func() -> void: cursor.text = _cursor_summary()
+	_follow(cursor, summary, Settings.cursor_changed)
+	cursor.pressed.connect(_open_popover.bind(cursor, "CURSOR", _build_cursor))
 	_section("DITHER")
 	_colour_row()
 	var dither := Button.new()
 	var strength := _row("Dither", dither)
-	_follow_dither(dither, func() -> void:
+	_follow(dither, func() -> void:
 		dither.text = _dither_summary()
 		strength.text = _dither_strength())
 	dither.pressed.connect(_open_popover.bind(dither, "DITHER", _build_dither))
@@ -139,13 +146,15 @@ func _slider(caption: String, section: String, key: String, low: int, high: int,
 		if section == "audio":
 			Settings.apply_audio()
 		elif section == "dither":
-			Settings.dither_changed.emit())
+			Settings.dither_changed.emit()
+		elif section == "cursor":
+			Settings.cursor_changed.emit())
 	return slider
 
 
 ## Adds a button that steps through options: Enter for the next, a click on the left or
 ## right half for the previous or next, or the left and right arrows like the sliders.
-## The screen redraws through the new dither setting straight away. labels, if given,
+## The screen redraws through the new dither or cursor setting straight away. labels, if given,
 ## show in place of the options; true and false show as ON and OFF.
 func _choice(caption: String, section: String, key: String, options: Array, parent := _rows, labels := []) -> Button:
 	var button := Button.new()
@@ -163,8 +172,8 @@ func _choice(caption: String, section: String, key: String, options: Array, pare
 		var at := options.find(Settings.get_value(section, key))
 		Settings.set_value(section, key, options[posmod(at + by, options.size())])
 		Settings.save_settings()
-		Settings.dither_changed.emit()
-	_follow_dither(button, refresh)
+		_changed_signal(section).emit()
+	_follow(button, refresh, _changed_signal(section))
 	button.pressed.connect(step.bind(1))
 	button.gui_input.connect(func(event: InputEvent) -> void:
 		var click := event as InputEventMouseButton
@@ -179,24 +188,37 @@ func _choice(caption: String, section: String, key: String, options: Array, pare
 	return button
 
 
-## Calls refresh now and after every dither change while node is in the tree, so rows
-## follow changes made elsewhere (a picked colour, Reset) and never touch a freed node.
-func _follow_dither(node: Node, refresh: Callable) -> void:
+## The signal a section's settings emit when they change: the cursor's, else the dither's.
+func _changed_signal(section: String) -> Signal:
+	return Settings.cursor_changed if section == "cursor" else Settings.dither_changed
+
+
+## Calls refresh now and after every emit of changed (the dither's by default) while node
+## is in the tree, so rows follow changes made elsewhere (a picked colour, Reset) and never
+## touch a freed node.
+func _follow(node: Node, refresh: Callable, changed := Settings.dither_changed) -> void:
 	refresh.call()
-	Settings.dither_changed.connect(refresh)
-	node.tree_exiting.connect(func() -> void: Settings.dither_changed.disconnect(refresh))
+	changed.connect(refresh)
+	node.tree_exiting.connect(func() -> void: changed.disconnect(refresh))
 
 
 ## Adds the Colour row: a swatch and hex of the dither colour that opens the picker.
 func _colour_row() -> void:
-	_colour = Button.new()
-	_row("Colour", _colour)
-	_swatch = ColorRect.new()
-	_swatch.custom_minimum_size = Vector2(28.0, 14.0)
-	_swatch.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_colour.add_child(_swatch)
-	_swatch.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT, Control.PRESET_MODE_MINSIZE, 14)
+	_colour = _swatch_row("Colour")
+	_swatch = _colour.get_child(0)
 	_colour.pressed.connect(_open_popover.bind(_colour, "COLOUR", _build_colour))
+
+
+## Adds a row whose button carries a small colour swatch, its first child, and returns it.
+func _swatch_row(caption: String, parent := _rows) -> Button:
+	var button := Button.new()
+	_row(caption, button, parent)
+	var swatch := ColorRect.new()
+	swatch.custom_minimum_size = Vector2(28.0, 14.0)
+	swatch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(swatch)
+	swatch.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT, Control.PRESET_MODE_MINSIZE, 14)
+	return button
 
 
 ## Adds Reset to default: the first press asks for a second within RESET_CONFIRM seconds,
@@ -222,6 +244,11 @@ func _reset_row() -> void:
 			# Reopens the popover, so it shows the restored values.
 			_opener.pressed.emit()
 			reset.grab_focus())
+
+
+## The Cursor row's summary, such as 250% · WHITE.
+func _cursor_summary() -> String:
+	return "%d%% · %s" % [Settings.get_value("cursor", "size"), str(Settings.get_value("cursor", "colour")).to_upper()]
 
 
 ## The Dither row's summary, such as RGB · BAYER 8×8, or OFF.
@@ -286,7 +313,7 @@ func _build_colour(rows: VBoxContainer) -> void:
 	var picker := AccentPicker.new()
 	picker.caption_width = POPOVER_COLUMNS.x
 	rows.add_child(picker)
-	_follow_dither(picker, func() -> void: picker.set_color(MapTheme.dither_accent()))
+	_follow(picker, func() -> void: picker.set_color(MapTheme.dither_accent()))
 	picker.changed.connect(func(color: Color) -> void:
 		Settings.set_value("dither", "accent", "#" + color.to_html(false))
 		Settings.set_value("dither", "follow_map", false)
@@ -310,7 +337,7 @@ func _build_dither(rows: VBoxContainer) -> void:
 	var skin := _choice("Skin colours", "dither", "skin_colours", [true, false], rows)
 	_slider("Scanlines", "dither", "scanlines", 0, 100, 100.0, "%d%%", rows)
 	_slider("Film grain", "dither", "grain", 0, 20, 100.0, "%d%%", rows)
-	_follow_dither(mode, func() -> void:
+	_follow(mode, func() -> void:
 		var chosen := str(Settings.get_value("dither", "pattern"))
 		var off: bool = Settings.get_value("dither", "mode") == "off"
 		var palette: bool = Settings.get_value("dither", "mode") == "palette"
@@ -320,3 +347,50 @@ func _build_dither(rows: VBoxContainer) -> void:
 		}
 		for control: Control in dims:
 			control.get_parent().modulate.a = DIMMED if dims[control] else 1.0)
+
+
+## The Cursor popover: a live preview, then every cursor knob. Dithered and Expand apply
+## from the next play. The Custom colour row swaps in the picker.
+func _build_cursor(rows: VBoxContainer) -> void:
+	_cursor_preview(rows)
+	_slider("Size", "cursor", "size", 25, 300, 1.0, "%d%%", rows)
+	_choice("Colour", "cursor", "colour", Settings.CURSOR_COLOURS, rows)
+	var custom := _swatch_row("Custom colour", rows)
+	# The opener stays the Cursor row, which outlives this popover's rows.
+	custom.pressed.connect(_open_popover.bind(_opener, "CURSOR COLOUR", _build_cursor_colour))
+	var refresh := func() -> void:
+		var colour := CursorView.custom_colour()
+		custom.get_child(0).color = colour
+		custom.text = AccentPicker.html(colour)
+	_follow(custom, refresh, Settings.cursor_changed)
+	_slider("Opacity", "cursor", "opacity", 30, 100, 1.0, "%d%%", rows)
+	_choice("Outline", "cursor", "outline", [true, false], rows)
+	_choice("Dithered", "cursor", "dithered", [true, false], rows)
+	_choice("Expand on hold", "cursor", "expand", [true, false], rows)
+
+
+## The Custom colour popover: the picker. Picking a colour switches Colour to Custom.
+func _build_cursor_colour(rows: VBoxContainer) -> void:
+	_cursor_preview(rows)
+	var picker := AccentPicker.new()
+	picker.caption_width = POPOVER_COLUMNS.x
+	rows.add_child(picker)
+	var refresh := func() -> void: picker.set_color(CursorView.custom_colour())
+	_follow(picker, refresh, Settings.cursor_changed)
+	picker.changed.connect(func(color: Color) -> void:
+		Settings.set_value("cursor", "custom_colour", "#" + color.to_html(false))
+		Settings.set_value("cursor", "colour", "custom")
+		Settings.cursor_changed.emit())
+	picker.committed.connect(Settings.save_settings)
+
+
+## A strip showing the cursor as it will draw, following the settings live.
+func _cursor_preview(rows: VBoxContainer) -> void:
+	var strip := ColorRect.new()
+	strip.color = Color(0.0, 0.0, 0.0, 0.5)
+	strip.custom_minimum_size.y = 56.0
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var cursor := CursorView.new()
+	strip.add_child(cursor)
+	strip.resized.connect(func() -> void: cursor.position = strip.size / 2.0)
+	rows.add_child(strip)

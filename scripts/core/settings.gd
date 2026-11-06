@@ -4,6 +4,8 @@ extends Node
 signal audio_changed
 ## Emitted after a dither setting changes, so the screen filter and palette reload.
 signal dither_changed
+## Emitted after a cursor setting changes, so the cursor preview redraws.
+signal cursor_changed
 
 const PATH := "user://settings.cfg"
 const DEFAULTS := {
@@ -25,6 +27,16 @@ const DEFAULTS := {
 		"color_levels": 4, "shades": 5, "skin_colours": true, "scanlines": 0.0,
 		"grain": 0.0, "beat_pulse": true,
 	},
+	## The standard-mode cursor (see CursorView). size: percent of the skin's cursor, 25 to
+	## 300. colour: a CURSOR_COLOURS name; skin keeps the ring's own blue, accent is the
+	## dither colour and custom is custom_colour (#rrggbb). outline: a thin black ring so it
+	## reads on bright notes. opacity: percent, 30 to 100. dithered: draw the cursor under
+	## the dither filter like everything else, instead of crisp above it. expand: grow while
+	## a hit key is held.
+	"cursor": {
+		"size": 250, "colour": "white", "custom_colour": "#ffffff", "outline": true,
+		"opacity": 100, "dithered": false, "expand": true,
+	},
 	## osu!lazer-style scroll speed, 1 to 40; F3 and F4 change it in game.
 	"mania": {"scroll_speed": 20},
 	## The last map selected in song select, so mode select shows its art on the next
@@ -40,10 +52,15 @@ const DITHER_MODES := ["rgb", "palette", "off"]
 const DITHER_PATTERNS := ["bayer", "noise", "grain", "flat"]
 ## Bayer matrix sizes the shader supports.
 const MATRIX_SIZES := [2, 4, 8, 16]
+## Cursor colour modes; skin keeps the ring's own colour.
+const CURSOR_COLOURS := ["skin", "white", "accent", "custom"]
 ## Variant types get_value converts between.
 const NUMBERS := [TYPE_INT, TYPE_FLOAT]
-## The [dither] keys that must be one of a list; anything else reads as the default.
-const DITHER_CHOICES := {"mode": DITHER_MODES, "pattern": DITHER_PATTERNS, "matrix_size": MATRIX_SIZES}
+## The keys that must be one of a list, by section; anything else reads as the default.
+const CHOICES := {
+	"dither": {"mode": DITHER_MODES, "pattern": DITHER_PATTERNS, "matrix_size": MATRIX_SIZES},
+	"cursor": {"colour": CURSOR_COLOURS},
+}
 
 var _config := ConfigFile.new()
 
@@ -77,7 +94,7 @@ func save_settings() -> void:
 
 
 ## The saved value, or the default when it is missing, of the wrong type or not one of its
-## DITHER_CHOICES (a hand-edited file). Whole and fractional numbers convert to the
+## CHOICES (a hand-edited file). Whole and fractional numbers convert to the
 ## default's type.
 func get_value(section: String, key: String) -> Variant:
 	var fallback: Variant = DEFAULTS[section][key]
@@ -86,7 +103,7 @@ func get_value(section: String, key: String) -> Variant:
 		value = type_convert(value, typeof(fallback))
 	if typeof(value) != typeof(fallback):
 		return fallback
-	if section == "dither" and DITHER_CHOICES.has(key) and not value in DITHER_CHOICES[key]:
+	if CHOICES.get(section, {}).has(key) and not value in CHOICES[section][key]:
 		return fallback
 	return value
 
