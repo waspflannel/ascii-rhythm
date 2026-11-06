@@ -5,8 +5,10 @@ extends Sprite2D
 
 const RING := preload("res://assets/skins/neptune/standard/hitcircles/cursor@2x.png")
 const SHADER := preload("res://shaders/cursor.gdshader")
-## The ring's scale at size 100%.
-const BASE_SCALE := 0.075
+## The ring's scale at size 100%: the skin's 0.075 inside the standard playfield, which
+## scales by about 1.52 at 1280x720 (see Play._layout_playfield). The cursor itself lives
+## outside the playfield, so it takes that factor here.
+const BASE_SCALE := 0.114
 ## The ring grows this much while a hit key or button is held (with Expand on).
 const HELD_SCALE := 1.2
 ## Outline thickness in layout pixels, and its cap in texels so a tiny cursor keeps it

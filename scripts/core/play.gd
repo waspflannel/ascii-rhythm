@@ -60,7 +60,7 @@ var _hit_sound: AudioStreamPlayer
 @onready var _judgement_values: Array[Label] = [$UI/Stats/PerfectValue, $UI/Stats/GreatValue, $UI/Stats/GoodValue, $UI/Stats/MissValue]
 @onready var _cursor: CursorView = $Cursor
 ## Standard only: the layer above the dither filter that holds the cursor unless Settings
-## draws it dithered; null when the cursor stays in the playfield.
+## draws it dithered; null when the cursor stays under Play, in the dithered SubViewport.
 var _overlay: CanvasLayer
 
 
