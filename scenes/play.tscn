@@ -17,7 +17,7 @@ script = ExtResource("1_play")
 
 [node name="Playfield" type="Node2D" parent="."]
 
-[node name="Cursor" type="Sprite2D" parent="Playfield"]
+[node name="Cursor" type="Sprite2D" parent="."]
 visible = false
 z_index = 100
 script = ExtResource("2_cursor")

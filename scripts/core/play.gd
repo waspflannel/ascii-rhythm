@@ -58,7 +58,7 @@ var _hit_sound: AudioStreamPlayer
 @onready var _time_value: Label = $UI/Details/TimeValue
 @onready var _objects_value: Label = $UI/Stats/ObjectsValue
 @onready var _judgement_values: Array[Label] = [$UI/Stats/PerfectValue, $UI/Stats/GreatValue, $UI/Stats/GoodValue, $UI/Stats/MissValue]
-@onready var _cursor: CursorView = $Playfield/Cursor
+@onready var _cursor: CursorView = $Cursor
 ## Standard only: the layer above the dither filter that holds the cursor unless Settings
 ## draws it dithered; null when the cursor stays in the playfield.
 var _overlay: CanvasLayer
@@ -151,8 +151,9 @@ func _advance(t: float) -> void:
         _spawn(beatmap.hit_objects[_next_object])
         _next_object += 1
     _cursor.visible = beatmap.mode == Beatmap.MODE_STANDARD
-    # The overlay is in window coordinates; the SubViewport fills the window from its corner.
-    _cursor.position = get_viewport().get_mouse_position() if _overlay else _field.get_local_mouse_position()
+    # Viewport coordinates, not the scaled Playfield's, so Size means the same dithered or not;
+    # the overlay is in window coordinates and the SubViewport fills the window from its corner.
+    _cursor.position = get_viewport().get_mouse_position()
     for view in _live.duplicate():
         view.holding = _is_holding(view)
         if not view.finished:
