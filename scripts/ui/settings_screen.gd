@@ -8,6 +8,8 @@ extends Control
 
 signal back_requested
 
+const CURSOR_VIEW := preload("res://scripts/ui/cursor_view.gd")
+
 ## Caption and value column widths of the panel's rows.
 const COLUMNS := Vector2(200, 96)
 ## The narrower columns of popover rows.
@@ -359,7 +361,7 @@ func _build_cursor(rows: VBoxContainer) -> void:
 	# The opener stays the Cursor row, which outlives this popover's rows.
 	custom.pressed.connect(_open_popover.bind(_opener, "CURSOR COLOUR", _build_cursor_colour))
 	var refresh := func() -> void:
-		var colour := CursorView.custom_colour()
+		var colour := CURSOR_VIEW.custom_colour()
 		custom.get_child(0).color = colour
 		custom.text = AccentPicker.html(colour)
 	_follow(custom, refresh, Settings.cursor_changed)
@@ -375,7 +377,7 @@ func _build_cursor_colour(rows: VBoxContainer) -> void:
 	var picker := AccentPicker.new()
 	picker.caption_width = POPOVER_COLUMNS.x
 	rows.add_child(picker)
-	var refresh := func() -> void: picker.set_color(CursorView.custom_colour())
+	var refresh := func() -> void: picker.set_color(CURSOR_VIEW.custom_colour())
 	_follow(picker, refresh, Settings.cursor_changed)
 	picker.changed.connect(func(color: Color) -> void:
 		Settings.set_value("cursor", "custom_colour", "#" + color.to_html(false))
@@ -390,7 +392,7 @@ func _cursor_preview(rows: VBoxContainer) -> void:
 	strip.color = Color(0.0, 0.0, 0.0, 0.5)
 	strip.custom_minimum_size.y = 56.0
 	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var cursor := CursorView.new()
+	var cursor := CURSOR_VIEW.new()
 	strip.add_child(cursor)
 	strip.resized.connect(func() -> void: cursor.position = strip.size / 2.0)
 	rows.add_child(strip)

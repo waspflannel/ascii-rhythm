@@ -11,6 +11,7 @@ const CIRCLE := preload("res://scenes/hit_objects/hit_circle_view.tscn")
 const SLIDER := preload("res://scenes/hit_objects/slider_view.tscn")
 const SPINNER := preload("res://scenes/hit_objects/spinner_view.tscn")
 const NOTE := preload("res://scenes/hit_objects/mania_note_view.tscn")
+const CURSOR_VIEW := preload("res://scripts/ui/cursor_view.gd")
 ## Default mania keys per key count, symmetric around the space bar.
 const MANIA_KEYS := {
     1: [KEY_SPACE],
@@ -58,7 +59,7 @@ var _hit_sound: AudioStreamPlayer
 @onready var _time_value: Label = $UI/Details/TimeValue
 @onready var _objects_value: Label = $UI/Stats/ObjectsValue
 @onready var _judgement_values: Array[Label] = [$UI/Stats/PerfectValue, $UI/Stats/GreatValue, $UI/Stats/GoodValue, $UI/Stats/MissValue]
-@onready var _cursor: CursorView = $Cursor
+@onready var _cursor: CURSOR_VIEW = $Cursor
 ## Standard only: the layer above the dither filter that holds the cursor unless Settings
 ## draws it dithered; null when the cursor stays under Play, in the dithered SubViewport.
 var _overlay: CanvasLayer
