@@ -8,6 +8,7 @@ const RUNNER := "res://tools/mapperatorinator_run.py"
 ## The job the runner reads, and the log it writes and progress() tails.
 const JOB := "user://mapperatorinator_job.json"
 const LOG := "user://mapperatorinator.log"
+const GENERATOR := preload("res://scripts/beatmap/beatmap_generator.gd")
 
 
 ## Starts mapping song (a BeatmapGenerator.prepare_set result) with Hydra overrides plus
@@ -24,7 +25,7 @@ static func start(song: Dictionary, version: String, overrides: Dictionary) -> D
 	var config: String = settings.config_name
 	settings.erase("config_name")
 	settings.merge({gamemode = Beatmap.MODE_MANIA, title = song.title, artist = song.artist, version = version}, true)
-	var out := ProjectSettings.globalize_path(song.path.path_join(BeatmapGenerator.osu_name(song, version)))
+	var out := ProjectSettings.globalize_path(song.path.path_join(GENERATOR.osu_name(song, version)))
 	# A map left from an earlier run would read as this one's success.
 	DirAccess.remove_absolute(out)
 	var job := {
