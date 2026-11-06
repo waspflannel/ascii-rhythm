@@ -41,17 +41,10 @@ static func generate(source: String, mania: bool, standard: bool, stars: float) 
 	if analysis.onsets.size() < MIN_ONSETS:
 		result.error = "Too few beats found in %s" % source.get_file()
 		return result
-	var title := source.get_file().get_basename()
-	result.folder = ("%s (Rhythm AI)" % title).validate_filename()
-	var folder := LIBRARY.path_join(result.folder)
-	var audio_name := "audio." + source.get_extension().to_lower()
-	var audio := ProjectSettings.globalize_path(folder.path_join(audio_name))
-	var error := DirAccess.make_dir_recursive_absolute(folder)
-	# Regenerating from the set's own copy must not copy the file onto itself.
-	if error == OK and audio.replace("\\", "/").nocasecmp_to(source.replace("\\", "/")) != 0:
-		error = DirAccess.copy_absolute(source, audio)
-	if error != OK:
-		result.error = "Could not write to beatmaps/%s (error %d)" % [result.folder, error]
+	var song := prepare_set(source)
+	result.folder = song.folder
+	if not song.error.is_empty():
+		result.error = song.error
 		return result
 	var knobs := _knobs(stars)
 	var times := _pick(analysis, knobs)
@@ -59,13 +52,13 @@ static func generate(source: String, mania: bool, standard: bool, stars: float) 
 	for mode: int in ([Beatmap.MODE_MANIA] if mania else []) + ([Beatmap.MODE_STANDARD] if standard else []):
 		var mode_name := "Mania" if mode == Beatmap.MODE_MANIA else "Standard"
 		# Seeded from the title, so the same song and stars give the same map.
-		rng.seed = hash(title)
-		var text := _header(title, audio_name, mode, "AI %.1f★ %s" % [stars, mode_name], analysis, knobs)
+		rng.seed = hash(song.title)
+		var text := _header(song.title, song.artist, song.audio_name, mode, "AI %.1f★ %s" % [stars, mode_name], analysis, knobs)
 		if mode == Beatmap.MODE_MANIA:
 			text += _mania_objects(times, analysis.bpm, knobs, rng)
 		else:
 			text += _standard_objects(times, analysis.bpm, knobs, rng)
-		var path := folder.path_join(("Unknown - %s (Rhythm AI) [AI %.1f %s].osu" % [title, stars, mode_name]).validate_filename())
+		var path: String = song.path.path_join(osu_name(song, "AI %.1f %s" % [stars, mode_name]))
 		var file := FileAccess.open(path, FileAccess.WRITE)
 		if file == null:
 			result.error = "Could not write %s (error %d)" % [path.get_file(), FileAccess.get_open_error()]
@@ -73,6 +66,35 @@ static func generate(source: String, mania: bool, standard: bool, stars: float) 
 		file.store_string(text)
 		result.paths.append(path)
 	return result
+
+
+## Makes source's set folder under beatmaps/ and copies the song into it. Returns {error,
+## folder (its name), path (res://), audio_name, title, artist}; "Artist - Title" file
+## names give both, others are all title.
+static func prepare_set(source: String) -> Dictionary:
+	var stem := source.get_file().get_basename()
+	var parts := stem.split(" - ", true, 1)
+	var song := {
+		error = "",
+		folder = ("%s (Rhythm AI)" % stem).validate_filename(),
+		audio_name = "audio." + source.get_extension().to_lower(),
+		artist = parts[0].strip_edges() if parts.size() == 2 else "Unknown",
+		title = parts[-1].strip_edges(),
+	}
+	song.path = LIBRARY.path_join(song.folder)
+	var audio := ProjectSettings.globalize_path(song.path.path_join(song.audio_name))
+	var error := DirAccess.make_dir_recursive_absolute(song.path)
+	# Regenerating from the set's own copy must not copy the file onto itself.
+	if error == OK and audio.replace("\\", "/").nocasecmp_to(source.replace("\\", "/")) != 0:
+		error = DirAccess.copy_absolute(source, audio)
+	if error != OK:
+		song.error = "Could not write to beatmaps/%s (error %d)" % [song.folder, error]
+	return song
+
+
+## A map's .osu file name in song's set, for its difficulty name.
+static func osu_name(song: Dictionary, version: String) -> String:
+	return ("%s - %s (Rhythm AI) [%s].osu" % [song.artist, song.title, version]).validate_filename()
 
 
 ## Decodes the song and returns {onsets (s), strength, bpm, offset (s), length (s)}.
@@ -202,7 +224,7 @@ static func _pick(analysis: Dictionary, knobs: Dictionary) -> PackedInt32Array:
 
 ## The .osu sections before [HitObjects]' lines. Mode: starts its line, as
 ## Beatmap._read_mode needs.
-static func _header(title: String, audio_name: String, mode: int, version: String, analysis: Dictionary, knobs: Dictionary) -> String:
+static func _header(title: String, artist: String, audio_name: String, mode: int, version: String, analysis: Dictionary, knobs: Dictionary) -> String:
 	var lines := PackedStringArray([
 		"osu file format v14",
 		"",
@@ -215,7 +237,7 @@ static func _header(title: String, audio_name: String, mode: int, version: Strin
 		"",
 		"[Metadata]",
 		"Title:%s" % title,
-		"Artist:Unknown",
+		"Artist:%s" % artist,
 		"Creator:Rhythm AI",
 		"Version:%s" % version,
 		"",
