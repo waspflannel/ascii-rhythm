@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/ui/space_backdrop.gd" id="2_backdrop"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/mode-osu-small@2x.png" id="4_osu"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/menu/mode-mania-small@2x.png" id="5_mania"]
+[ext_resource type="Script" path="res://scripts/ui/ascii_accent.gd" id="9_ascii"]
 
 [node name="MainMenu" type="Control"]
 texture_filter = 2
@@ -56,6 +57,7 @@ alignment = 1
 layout_mode = 2
 theme_type_variation = &"AccentLabel"
 text = "リズム"
+script = ExtResource("9_ascii")
 
 [node name="EchoTop" type="Label" parent="Content"]
 layout_mode = 2

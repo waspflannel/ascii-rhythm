@@ -39,6 +39,7 @@ func _ready() -> void:
 	_master = _slider("Master volume", "audio", "volume", 0, 100, 100.0, "%d%%")
 	_slider("Music volume", "audio", "music_volume", 0, 100, 100.0, "%d%%")
 	_slider("SFX volume", "audio", "sfx_volume", 0, 100, 100.0, "%d%%")
+	_slider("Hitsound volume", "audio", "hitsound_volume", 0, 100, 100.0, "%d%%")
 	_slider("Audio offset", "audio", "offset_ms", -500, 500, 1.0, "%+d ms")
 	_section("MANIA")
 	_slider("Scroll speed", "mania", "scroll_speed", 1, 40, 1.0, "%d")

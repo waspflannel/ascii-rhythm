@@ -37,10 +37,18 @@ func _parse_hit_object(parts: PackedStringArray) -> HitObject:
 		var length := parts[7].to_float()
 		var timing := timing_at(time)
 		var span_ms := length / (slider_multiplier * 100.0 * timing.slider_velocity) * timing.beat_length
-		return HitSlider.new(
+		var slider := HitSlider.new(
 			time,
 			time + span_ms * slides / 1000.0,
 			HitSlider.build_curve(curve_parts[0], points, length),
 			slides,
 			timing.beat_length / slider_tick_rate / 1000.0)
+		# ...,edgeSounds,edgeSets,hitSample: 2|0|8 and normal:addition per edge.
+		if parts.size() >= 9:
+			for sound in parts[8].split("|"):
+				slider.edge_sounds.append(sound.to_int())
+		if parts.size() >= 10:
+			for sets in parts[9].split("|"):
+				slider.edge_sets.append(Vector2i(clampi(sets.get_slice(":", 0).to_int(), 0, 3), clampi(sets.get_slice(":", 1).to_int(), 0, 3)))
+		return slider
 	return null

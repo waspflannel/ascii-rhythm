@@ -1,8 +1,8 @@
 class_name SpaceBackdrop
 extends Control
 ## The menus' night sky: a black field of stars in three depths that drift slowly and
-## shift with the mouse, a few of Neptune's four-point sparkles, and optional corner
-## brackets framing the screen like Neptune's menu art.
+## shift with the mouse, a few of Neptune's four-point sparkles, and optional ASCII
+## box corners framing the screen.
 
 const SPARKLE := preload(SkinAssets.DIR + "hud/star@2x.png")
 ## Star depths, far to near: drift and parallax scale with depth.
@@ -13,6 +13,9 @@ const DRIFT := Vector2(-7.0, 1.5)
 const PARALLAX := 14.0
 const FRAME_INSET := 22.0
 const FRAME_ARM := 110.0
+## The frame's glyph size and how many │ rows each corner drops.
+const FRAME_FONT_SIZE := 14
+const FRAME_DROP := 3
 
 @export var star_count := 170
 @export var sparkle_count := 7
@@ -65,10 +68,23 @@ func _wrap(point: Vector2) -> Vector2:
 	return Vector2(fposmod(point.x, size.x), fposmod(point.y, size.y))
 
 
+## Box-drawing corners in the monospace font, an ASCII frame around the screen.
 func _draw_frame() -> void:
+	var font := get_theme_default_font()
 	var color := Color(Palette.WHITE, 0.5)
+	var dash := font.get_string_size("─", HORIZONTAL_ALIGNMENT_LEFT, -1, FRAME_FONT_SIZE)
+	var run := "─".repeat(int(FRAME_ARM / dash.x))
+	var ascent := font.get_ascent(FRAME_FONT_SIZE)
 	var inner := Rect2(Vector2.ONE * FRAME_INSET, size - Vector2.ONE * FRAME_INSET * 2.0)
-	for corner: Vector2 in [inner.position, Vector2(inner.end.x, inner.position.y), inner.end, Vector2(inner.position.x, inner.end.y)]:
-		var toward: Vector2 = (inner.get_center() - corner).sign()
-		draw_line(corner, corner + Vector2(toward.x * FRAME_ARM, 0.0), color, 1.0)
-		draw_line(corner, corner + Vector2(0.0, toward.y * FRAME_ARM * 0.6), color, 1.0)
+	var right := inner.end.x - dash.x * (run.length() + 1)
+	var rows := {
+		inner.position.y: ["┌" + run, run + "┐"],
+		inner.end.y - dash.y: ["└" + run, run + "┘"],
+	}
+	for y: float in rows:
+		draw_string(font, Vector2(inner.position.x, y + ascent), rows[y][0], HORIZONTAL_ALIGNMENT_LEFT, -1, FRAME_FONT_SIZE, color)
+		draw_string(font, Vector2(right, y + ascent), rows[y][1], HORIZONTAL_ALIGNMENT_LEFT, -1, FRAME_FONT_SIZE, color)
+		var down := 1.0 if y == inner.position.y else -1.0
+		for i in range(1, FRAME_DROP + 1):
+			for x: float in [inner.position.x, inner.end.x - dash.x]:
+				draw_string(font, Vector2(x, y + down * dash.y * i + ascent), "│", HORIZONTAL_ALIGNMENT_LEFT, -1, FRAME_FONT_SIZE, color)

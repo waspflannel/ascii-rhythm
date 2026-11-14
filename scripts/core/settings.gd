@@ -10,7 +10,8 @@ signal cursor_changed
 const PATH := "user://settings.cfg"
 const DEFAULTS := {
 	## volume is the master volume; music and sfx scale their buses under it, all 0 to 1.
-	"audio": {"offset_ms": 0, "volume": 1.0, "music_volume": 1.0, "sfx_volume": 1.0},
+	## hitsound_volume scales hitsounds (HitSounds) on the SFX bus, 0 to 1.
+	"audio": {"offset_ms": 0, "volume": 1.0, "music_volume": 1.0, "sfx_volume": 1.0, "hitsound_volume": 0.8},
 	## The dither look (see MapTheme.apply_palette and main.gd). accent: the picked dither
 	## colour as #rrggbb, Neptune's royal blue (Palette.BLUE) by default. follow_map: the
 	## map art's accent drives the dither instead (outside play). tint: how far colours move

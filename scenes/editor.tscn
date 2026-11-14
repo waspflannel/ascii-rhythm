@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/editor_screen.gd" id="1_editor"]
 [ext_resource type="Script" path="res://scripts/ui/space_backdrop.gd" id="2_backdrop"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/star@2x.png" id="3_star"]
+[ext_resource type="Script" path="res://scripts/ui/ascii_accent.gd" id="9_ascii"]
 
 [node name="Editor" type="Control"]
 texture_filter = 2
@@ -50,6 +51,7 @@ layout_mode = 2
 theme_type_variation = &"AccentLabel"
 theme_override_font_sizes/font_size = 14
 text = "エディタ   ／   EDITOR"
+script = ExtResource("9_ascii")
 
 [node name="Title" type="Label" parent="Header"]
 layout_mode = 2

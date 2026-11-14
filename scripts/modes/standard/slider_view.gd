@@ -3,6 +3,10 @@ extends HitCircleView
 ## An osu! standard slider. The head is hit like a circle, then the ball has to
 ## be followed with a hit key held through the tail. Breaking tracking misses.
 
+## The followed ball reached edge: 1 for the first repeat up to slides for the tail
+## (play.gd sounds the head, edge 0, on the press).
+signal edge_reached(edge: int)
+
 ## Follow area around the ball, relative to the circle radius.
 const FOLLOW_SCALE := 2.4
 ## The follow circle grows in over FOLLOW_IN seconds when tracking starts, then breathes
@@ -10,6 +14,11 @@ const FOLLOW_SCALE := 2.4
 const FOLLOW_IN := 0.12
 const FOLLOW_BREATHE := 0.04
 const BREATHE_TIME := 0.6
+## Reverse arrow size relative to the circle: Neptune's arrow fills a quarter of its
+## texture, so this makes it about a radius across. It kicks up ARROW_PULSE on each beat
+## and eases back, as in osu!.
+const ARROW_SIZE := 1.7
+const ARROW_PULSE := 0.3
 
 var track_color := Color.BLACK
 var border_color := Color.WHITE
@@ -24,6 +33,10 @@ var _spans_done := 0
 ## Song time the follow circle last appeared, or -1 while hidden.
 var _follow_since := -1.0
 var _follow_scale: Vector2
+var _arrow_scale: Vector2
+## The arrows at the tail and head ends; each shows while a repeat at its end is ahead.
+var _tail_arrow: Sprite2D
+var _head_arrow: Sprite2D
 
 @onready var track: Node2D = $Track
 @onready var tail: Sprite2D = $Tail
@@ -64,7 +77,16 @@ func _ready() -> void:
 	tail.scale = sprite.scale
 	tail_overlay.scale = overlay.scale
 	tail.self_modulate = combo_color
-	repeat_arrow.scale = Vector2.ONE * radius * 1.1 / repeat_arrow.texture.get_width()
+	_arrow_scale = Vector2.ONE * radius * 2.0 * ARROW_SIZE / repeat_arrow.texture.get_width()
+	_tail_arrow = repeat_arrow
+	_head_arrow = repeat_arrow.duplicate() as Sprite2D
+	add_child(_head_arrow)
+	# Each arrow sits on its end circle and points back along the path.
+	var length := slider.curve.get_baked_length()
+	_tail_arrow.position = endpoint
+	_tail_arrow.rotation = (slider.curve.sample_baked(maxf(0.0, length - 5.0)) - position - endpoint).angle()
+	_head_arrow.position = Vector2.ZERO
+	_head_arrow.rotation = (slider.curve.sample_baked(minf(5.0, length)) - position).angle()
 	_follow_scale = Vector2.ONE * radius * FOLLOW_SCALE * 2.0 / follow.texture.get_width()
 	follow.scale = _follow_scale
 	follow.self_modulate = combo_color
@@ -101,14 +123,7 @@ func update_view(t: float) -> void:
 	for i in _tick_sprites.size():
 		var tick_span := floori((_tick_times[i] - slider.time) / span_duration)
 		_tick_sprites[i].visible = tick_span == span_index and t < _tick_times[i]
-	repeat_arrow.visible = span_index < slider.slides - 1
-	if repeat_arrow.visible:
-		var at_end := span_index % 2 == 0
-		var length := slider.curve.get_baked_length()
-		var destination := slider.curve.sample_baked(length if at_end else 0.0)
-		var inward := slider.curve.sample_baked(maxf(0.0, length - 5.0) if at_end else minf(5.0, length))
-		repeat_arrow.position = destination - position
-		repeat_arrow.rotation = (inward - destination).angle()
+	_update_arrows(t, span_duration)
 	var tracking := holding and t >= slider.time and cursor().distance_to(ball_position) <= radius * FOLLOW_SCALE
 	if _head_done and t >= slider.time:
 		if not tracking:
@@ -118,6 +133,7 @@ func update_view(t: float) -> void:
 		while _spans_done < mini(floori((t - slider.time) / span_duration), slider.slides):
 			_pop_end(_spans_done % 2 == 0)
 			_spans_done += 1
+			edge_reached.emit(_spans_done)
 		if t >= slider.end_time:
 			_finish(_head_judgement)
 
@@ -135,6 +151,23 @@ func press(t: float) -> bool:
 		_head_judgement = judgement
 		_resolve_head()
 	return true
+
+
+## Repeat k (1 to slides - 1) bounces at the tail for odd k and at the head for even k,
+## and is used up once the ball passes it. Each end's arrow shows while a repeat there is
+## ahead (the head's once the head circle is gone), pulsing on the beat.
+func _update_arrows(t: float, span_duration: float) -> void:
+	var slider := data as HitSlider
+	var passed := clampi(floori((t - slider.time) / span_duration), 0, slider.slides)
+	var next_tail := passed + 1 if passed % 2 == 0 else passed + 2
+	var next_head := passed + 2 if passed % 2 == 0 else passed + 1
+	_tail_arrow.visible = next_tail < slider.slides
+	_head_arrow.visible = next_head < slider.slides and t >= slider.time
+	var beat := map.beat_at(t)
+	var phase := fposmod((t - beat.time) * 1000.0 / maxf(beat.beat_length, 1.0), 1.0)
+	var pulse := _arrow_scale * (1.0 + ARROW_PULSE * pow(1.0 - phase, 3.0))
+	_tail_arrow.scale = pulse
+	_head_arrow.scale = pulse
 
 
 ## Grows the follow circle in as tracking starts, then breathes it gently.
@@ -173,7 +206,8 @@ func release(t: float) -> void:
 
 func play_exit() -> void:
 	follow.hide()
-	repeat_arrow.hide()
+	_tail_arrow.hide()
+	_head_arrow.hide()
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.18)
 	tween.tween_callback(queue_free)

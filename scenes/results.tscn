@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/ranking-retry@2x.png" id="4_retry"]
 [ext_resource type="Script" path="res://scripts/ui/space_backdrop.gd" id="5_backdrop"]
 [ext_resource type="Texture2D" path="res://assets/skins/neptune/hud/star@2x.png" id="7_star"]
+[ext_resource type="Script" path="res://scripts/ui/ascii_accent.gd" id="9_ascii"]
 
 [node name="Results" type="Control"]
 texture_filter = 2
@@ -56,6 +57,7 @@ layout_mode = 2
 theme_type_variation = &"AccentLabel"
 theme_override_font_sizes/font_size = 14
 text = "リザルト   ／   RESULTS"
+script = ExtResource("9_ascii")
 
 [node name="Title" type="Label" parent="Map"]
 layout_mode = 2
