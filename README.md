@@ -1,4 +1,4 @@
-# Rhythm
+# osu-lite
 
 An aesthetic osu!-style desktop rhythm game built with Godot 4 (GDScript). It plays real osu! beatmaps in two modes, **Standard** and **Mania**.
 
@@ -7,8 +7,11 @@ An aesthetic osu!-style desktop rhythm game built with Godot 4 (GDScript). It pl
 - Menus have an ASCII/Japanese flavour, and each map's background art sets the colour theme.
 - An AI beatmap **Editor** generates Standard or Mania maps from a song with [Mapperatorinator](https://github.com/OliBomby/Mapperatorinator), running on your local GPU.
 
-![Standard gameplay](docs/screenshots/4-standard-hud.png)
-![Song select](docs/screenshots/2-song-select-list.png)
+![Main menu](docs/screenshots/main-menu.png)
+![Standard gameplay](docs/screenshots/standard-gameplay.png)
+![Mania gameplay](docs/screenshots/mania-gameplay.png)
+
+More screenshots are in [docs/screenshots](docs/screenshots/).
 
 ## Run it
 
@@ -17,6 +20,8 @@ An aesthetic osu!-style desktop rhythm game built with Godot 4 (GDScript). It pl
 3. Press **F5** to play.
 
 To run it from a terminal, use `godot --path .`.
+
+Settings are saved to `settings.cfg` in Godot's user data folder, under `app_userdata/osu-lite` (for example `%APPDATA%\Godot\app_userdata\osu-lite` on Windows or `~/.local/share/godot/app_userdata/osu-lite` on Linux).
 
 ## Add maps
 
@@ -37,14 +42,6 @@ git submodule update --init third_party/Mapperatorinator
 ```
 
 Then create `third_party/Mapperatorinator/.venv` and install CUDA torch and the requirements into it. [third_party/README.md](third_party/README.md) has the exact commands, and Mapperatorinator's README covers GPU-specific details. The model weights download from Hugging Face the first time you click Generate. The rest of the game works without any of this.
-
-## Project layout
-
-- `scenes/`, `scripts/`: screens, gameplay modes, `.osu` parsing, the HUD and the Editor
-- `shaders/`: the dither post-process and the cursor shader
-- `assets/`: fonts, theme, bundled hitsounds and the skin textures the game uses
-- `tools/mapperatorinator_run.py`: the runner the Editor calls
-- `docs/DESIGN.md`: design notes
 
 ## Credits and licensing
 

@@ -76,7 +76,7 @@ static func prepare_set(source: String) -> Dictionary:
 	var parts := stem.split(" - ", true, 1)
 	var song := {
 		error = "",
-		folder = ("%s (Rhythm AI)" % stem).validate_filename(),
+		folder = ("%s (osu-lite AI)" % stem).validate_filename(),
 		audio_name = "audio." + source.get_extension().to_lower(),
 		artist = parts[0].strip_edges() if parts.size() == 2 else "Unknown",
 		title = parts[-1].strip_edges(),
@@ -94,7 +94,7 @@ static func prepare_set(source: String) -> Dictionary:
 
 ## A map's .osu file name in song's set, for its difficulty name.
 static func osu_name(song: Dictionary, version: String) -> String:
-	return ("%s - %s (Rhythm AI) [%s].osu" % [song.artist, song.title, version]).validate_filename()
+	return ("%s - %s (osu-lite AI) [%s].osu" % [song.artist, song.title, version]).validate_filename()
 
 
 ## Decodes the song and returns {onsets (s), strength, bpm, offset (s), length (s)}.
@@ -238,7 +238,7 @@ static func _header(title: String, artist: String, audio_name: String, mode: int
 		"[Metadata]",
 		"Title:%s" % title,
 		"Artist:%s" % artist,
-		"Creator:Rhythm AI",
+		"Creator:osu-lite AI",
 		"Version:%s" % version,
 		"",
 		"[Difficulty]",

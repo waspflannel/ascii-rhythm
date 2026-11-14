@@ -1,4 +1,4 @@
-# Rhythm: Design Doc
+# osu-lite: Design Doc
 
 ## Vision
 A chill, meditative, aesthetic desktop rhythm game. Solo only: no multiplayer, no leaderboards. It plays real osu! beatmaps in two modes, with a dithered space look: black, royal blue and white, after the Neptune skin.
