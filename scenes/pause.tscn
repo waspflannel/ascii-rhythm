@@ -44,12 +44,6 @@ layout_mode = 2
 theme_type_variation = &"TitleLabel"
 text = "PAUSED"
 
-[node name="Tagline" type="Label" parent="Content"]
-layout_mode = 2
-theme_type_variation = &"CaptionLabel"
-theme_override_font_sizes/font_size = 20
-text = "The stars will wait"
-
 [node name="Gap" type="Control" parent="Content"]
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
