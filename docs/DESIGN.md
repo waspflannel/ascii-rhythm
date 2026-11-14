@@ -30,13 +30,13 @@ Each mode plays its own map type. Mania maps (Mode: 3) play in Mania, and standa
 - **Gameplay screen:** pure black, no background art. Notes, circles, sliders and lanes use the skin's textures, rendered through the dither shader.
 - **Dither post-process:** the game renders to a SubViewport, then dithers it, by default a soft 8x8 ordered Bayer dither per colour channel with a light tint towards Neptune's royal blue. Settings picks the dither colour (any colour, or the map's) and every knob: mode (per channel, a palette built from the colour's ramp plus the skin's combo colours, or off), pattern (Bayer, noise, moving grain, flat), strength, matrix and cell size, levels, shades, scanlines and film grain. Each screen change fades through the dither, and an optional subtle beat pulse nudges the brightness on each beat.
 - **Gameplay feel:** crisp and tactile without clutter: raw (unaccumulated) mouse input, a flash-and-pop on hits, a tiny local shake on too-early clicks, a cursor that grows while a hit key is held, quick mania key flashes with slow release fades, and judgements that punch in (misses drop quietly), combo and score digits that kick on each hit (harder every 50th and 100th combo; a broken combo dims), a Perfect that snaps the approach circle away while weaker hits fade it, a breathing slider follow circle with small pops at each repeat and the tail, a red cut on the playfield on fail and a quick white-out into the results on a pass. Song select settles with a short out-expo ease and preview songs swell in instead of cutting. No particles, trails or screen shake.
-- **Menus and song select:** the space anime flavour lives here: a drifting star field, katakana accents and dithered map backgrounds; each screen takes its accent colour from the focused or last selected map's art.
+- **Menus and song select:** the space anime flavour lives here: a drifting star field, katakana accents framed as ASCII headers (`┌─ 設定 ／ SETTINGS ──── ◇`), box-drawing screen corners, a `>` caret on the focused menu button, and dithered map backgrounds; each screen takes its accent colour from the focused or last selected map's art.
 - Typography: a wide sans for titles and grade letters, a Didone serif for captions and headings (as in Neptune's art), monospace for numbers and hints.
 
 ## Audio and timing
 - Song time comes from the audio playback position (with output latency compensation), never frame deltas.
 - User-adjustable global audio offset plus an offset calibration screen.
-- Optional hitsounds (simple click). The map's own hitsound samples are a later feature.
+- Hitsounds follow osu!'s rules: each hit plays the normal sound plus its whistle, finish and clap additions from the object's hitSound flags and hitSample, falling back to the timing point's sample set, custom index and volume. Samples come from the map folder (`soft-hitclap2.wav` and so on), else a small bundled default set. Standard sounds circles, slider heads, repeats and tails, and cleared spinners; mania sounds hit presses. Settings has a hitsound volume under the SFX and master volumes.
 
 ## Screens
 1. Title / main menu

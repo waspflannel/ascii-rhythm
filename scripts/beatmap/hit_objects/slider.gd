@@ -12,6 +12,10 @@ var curve: Curve2D
 var slides: int
 ## Seconds between slider ticks.
 var tick_interval: float
+## Per edge (head, each repeat, tail): hitSound flags and Vector2i(normal set, addition
+## set). Empty, or shorter than slides + 1, falls back to the object's own.
+var edge_sounds := PackedInt32Array()
+var edge_sets: Array[Vector2i] = []
 
 
 func _init(p_time: float, p_end_time: float, p_curve: Curve2D, p_slides: int, p_tick_interval: float) -> void:
@@ -20,6 +24,11 @@ func _init(p_time: float, p_end_time: float, p_curve: Curve2D, p_slides: int, p_
 	position = p_curve.get_point_position(0)
 	slides = p_slides
 	tick_interval = p_tick_interval
+
+
+## Song time the ball reaches edge (0 the head, slides the tail).
+func edge_time(edge: int) -> float:
+	return time + (end_time - time) * edge / slides
 
 
 ## Where the slider ball is at song time t.

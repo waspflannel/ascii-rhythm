@@ -253,7 +253,7 @@ offset_right = -10.0
 theme_type_variation = &"AccentLabel"
 theme_override_colors/font_color = Color(0.95, 0.96, 1, 1)
 theme_override_font_sizes/font_size = 14
-text = "選曲"
+text = "「選曲」"
 horizontal_alignment = 2
 vertical_alignment = 1
 

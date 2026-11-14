@@ -51,7 +51,7 @@ var _lane_keys: Array = []
 var _stage: ManiaStage
 ## Mania only: how fast notes fall, in stage pixels per second.
 var _note_speed := 0.0
-var _hit_sound: AudioStreamPlayer
+var _hit_sounds: HitSounds
 
 @onready var _field: Node2D = $Playfield
 @onready var _music: AudioStreamPlayer = $Music
@@ -110,13 +110,9 @@ func _ready() -> void:
         $UI/AudioErrorLabel.show()
         return
     _map_value.text = "%s [%s]" % [beatmap.title, beatmap.version]
-    _hit_sound = AudioStreamPlayer.new()
-    _hit_sound.stream = _skin.hit_sound(beatmap.sample_set)
-    _hit_sound.bus = &"SFX"
-    _hit_sound.volume_linear = 0.5
-    # Built-in voice pool: rapid hits overlap instead of cutting each other off.
-    _hit_sound.max_polyphony = 8
-    add_child(_hit_sound)
+    _hit_sounds = HitSounds.new()
+    _hit_sounds.setup(beatmap)
+    add_child(_hit_sounds)
     if beatmap.mode == Beatmap.MODE_STANDARD:
         var ar := beatmap.approach_rate
         _preempt = 1.2 - 0.75 * (ar - 5.0) / 5.0 if ar >= 5.0 else 1.2 + 0.6 * (5.0 - ar) / 5.0
@@ -183,6 +179,7 @@ func _spawn(object: HitObject) -> void:
         view.track_color = _skin.slider_track
         view.border_color = _skin.slider_border
         view.tint_ball = _skin.tint_slider_ball
+        view.edge_reached.connect(func(edge: int) -> void: _hit_sounds.play_edge(object as HitSlider, edge))
     if view is ManiaNoteView:
         view.scroll_speed = _note_speed
     view.judged.connect(_on_judged.bind(view))
@@ -198,7 +195,11 @@ func _spawn(object: HitObject) -> void:
 func _on_judged(judgement: HitObjectView.Judgement, view: HitObjectView) -> void:
     _judgements[judgement] += 1
     if judgement != HitObjectView.Judgement.MISS:
-        _hit_sound.play()
+        # Slider edges sound as the ball reaches them (edge_reached), and a hold's
+        # release stays quiet: mania sounds on the press.
+        var hold_tail: bool = view.data is ManiaNote and view.data.is_hold() and view.finished
+        if not view.data is HitSlider and not hold_tail:
+            _hit_sounds.play_hit(view.data)
         if view.data is ManiaNote:
             _stage.flash(view.data.column)
     if view.data is ManiaNote:
@@ -360,7 +361,7 @@ func _input(event: InputEvent) -> void:
             if view.press(t):
                 # A slider head hit gives no judgement until the slider ends, so sound it here.
                 if view is SliderView and not view.finished:
-                    _hit_sound.play()
+                    _hit_sounds.play_edge(view.data as HitSlider, 0)
                 break
         elif not view.holding:
             view.release(t)

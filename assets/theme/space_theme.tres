@@ -65,10 +65,7 @@ content_margin_right = 28.0
 content_margin_bottom = 8.0
 texture = ExtResource("5_panel")
 
-[sub_resource type="StyleBoxFlat" id="Menu_focus"]
-draw_center = false
-border_width_left = 4
-border_color = Color(0.278, 0.463, 1, 1)
+[sub_resource type="StyleBoxEmpty" id="Menu_focus"]
 
 [sub_resource type="StyleBoxFlat" id="Back_normal"]
 content_margin_left = 12.0

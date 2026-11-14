@@ -16,6 +16,11 @@ class TimingPoint:
 	var slider_velocity := 1.0
 	## False for inherited (green line) points, which only change slider velocity.
 	var uninherited := true
+	## Hitsound defaults for objects in this section: sample set (0 the map's, 1 normal,
+	## 2 soft, 3 drum), custom sample index (0 the skin's sounds) and volume, 0 to 100.
+	var sample_set := 0
+	var sample_index := 0
+	var volume := 100
 
 
 ## Path of the .osu file. Audio and background paths are relative to its folder.
@@ -36,8 +41,8 @@ var hp_drain := 5.0
 var circle_size := 5.0
 var overall_difficulty := 5.0
 var approach_rate := -1.0
-## [General] SampleSet: Normal, Soft or Drum. Picks the skin hit sound.
-var sample_set := "Soft"
+## [General] SampleSet: Normal, Soft or Drum, for timing points that name none.
+var sample_set := "Normal"
 var timing_points: Array[TimingPoint] = []
 ## Sorted by time, ready for the gameplay scene.
 var hit_objects: Array[HitObject] = []
@@ -109,6 +114,7 @@ func _parse(lines: PackedStringArray) -> void:
 					combo_number += 1
 					obj.combo_index = combo_index
 					obj.combo_number = combo_number
+					_parse_hit_sample(obj, parts)
 					hit_objects.append(obj)
 	if approach_rate < 0.0:
 		approach_rate = overall_difficulty # Old maps have no ApproachRate.
@@ -130,7 +136,34 @@ func _parse_timing_point(parts: PackedStringArray) -> void:
 		if not timing_points.is_empty():
 			point.beat_length = timing_points.back().beat_length
 		point.slider_velocity = clampf(-100.0 / beat_length, 0.1, 10.0)
+	if parts.size() >= 6:
+		point.sample_set = clampi(parts[3].to_int(), 0, 3)
+		point.sample_index = maxi(0, parts[4].to_int())
+		point.volume = clampi(parts[5].to_int(), 0, 100)
 	timing_points.append(point)
+
+
+## hitSound flags, then the trailing hitSample normalSet:additionSet:index:volume:filename
+## (a mania hold puts its endTime first). Sliders read their edge sounds in StandardBeatmap.
+func _parse_hit_sample(obj: HitObject, parts: PackedStringArray) -> void:
+	obj.hit_sound = parts[4].to_int()
+	var last := parts[parts.size() - 1]
+	if parts.size() < 6 or "|" in last:
+		return
+	var fields := last.split(":")
+	if parts[3].to_int() & ManiaBeatmap.TYPE_HOLD:
+		fields = fields.slice(1)
+	if fields.size() < 4:
+		return
+	obj.normal_set = clampi(fields[0].to_int(), 0, 3)
+	obj.addition_set = clampi(fields[1].to_int(), 0, 3)
+	obj.sample_index = maxi(0, fields[2].to_int())
+	obj.volume = clampi(fields[3].to_int(), 0, 100)
+
+
+## [General] SampleSet as a timing point sample set number: 1 normal, 2 soft, 3 drum.
+func sample_set_id() -> int:
+	return maxi(1, ["normal", "soft", "drum"].find(sample_set.to_lower()) + 1)
 
 
 ## The timing point in effect at song time t.
