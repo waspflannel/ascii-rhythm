@@ -10,8 +10,6 @@ An aesthetic osu!-style desktop rhythm game built with Godot 4 (GDScript). It pl
 ![Main menu](docs/screenshots/main-menu.png)
 ![Standard gameplay](docs/screenshots/standard-gameplay.png)
 ![Mania gameplay](docs/screenshots/mania-gameplay.png)
-![Song select difficulties](docs/screenshots/song-select-difficulties.png)
-![Results](docs/screenshots/results.png)
 
 More screenshots are in [docs/screenshots](docs/screenshots/).
 
