@@ -11,3 +11,6 @@ beatmaps/*
 !beatmaps/.gitkeep
 !beatmaps/.gdignore
 !beatmaps/README.md
+
+# Python
+__pycache__/
